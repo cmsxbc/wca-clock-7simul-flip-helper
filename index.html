@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WCA 魔表打乱生成器</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.8rem;
+      }
+
+      p {
+        margin: 0 0 16px;
+        color: #cbd5e1;
+      }
+
+      form {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+
+      input[type="number"] {
+        width: 100px;
+        padding: 8px 10px;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        background: #1e293b;
+        color: #f8fafc;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 76px;
+        padding: 10px 12px;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        background: #1e293b;
+        color: #f8fafc;
+        resize: vertical;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-weight: 600;
+        cursor: pointer;
+        background: #38bdf8;
+        color: #0f172a;
+      }
+
+      button[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .secondary {
+        background: #334155;
+        color: #e2e8f0;
+      }
+
+      .status {
+        margin: 6px 0 16px;
+        color: #94a3b8;
+      }
+
+      .panel {
+        border: 1px solid #334155;
+        border-radius: 10px;
+        background: #0b1222;
+        padding: 12px;
+        margin: 0 0 14px;
+      }
+
+      .inline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .inline input[type="checkbox"] {
+        transform: translateY(1px);
+      }
+
+      .list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 8px;
+      }
+
+      .scramble-item {
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #1e293b;
+        border: 1px solid #334155;
+      }
+
+      .scramble-text {
+        margin: 0 0 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
+      .scramble-preview {
+        background: #0b1222;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        padding: 4px;
+      }
+
+      .meta {
+        margin-top: 22px;
+        color: #94a3b8;
+        font-size: 0.92rem;
+      }
+
+      code {
+        background: #1e293b;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>WCA 魔表（Clock）打乱展示</h1>
+      <p>参考 tnoodle 官方逻辑生成格式：前 9 步 + <code>y2</code> + 后 5 步。</p>
+
+      <section class="panel">
+        <form id="custom-form">
+          <label for="custom-scramble">输入一条 Clock 打乱并渲染：</label>
+          <textarea
+            id="custom-scramble"
+            name="custom-scramble"
+            placeholder="例如：UR1- DR2+ DL0+ UL5- U3+ R2- D1+ L0+ ALL4- y2 U1+ R4- D2+ L3- ALL0+"
+          ></textarea>
+          <div class="inline">
+            <button type="submit">渲染输入打乱</button>
+            <label class="inline" for="reset-pins">
+              <input id="reset-pins" type="checkbox" checked />
+              结束时将 pins 全部按下（WCA 常用展示）
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <form id="scramble-form">
+        <label for="count">生成条数：</label>
+        <input id="count" name="count" type="number" min="1" max="200" value="1" />
+        <button type="submit">生成打乱</button>
+        <button id="copy-all" type="button" class="secondary" disabled>复制全部</button>
+      </form>
+
+      <div id="status" class="status"></div>
+      <ol id="output-list" class="list"></ol>
+
+      <p class="meta">
+        说明：此页面用于学习和展示 Clock 打乱格式；正式比赛请始终使用 WCA 官方打乱程序。
+      </p>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
