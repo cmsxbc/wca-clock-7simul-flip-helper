@@ -671,11 +671,11 @@ function renderTicks(cx, cy, sidePrefix) {
 
 function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsFront, options = {}) {
   const pieces = [];
-  const { ghostPosit = null, ghostMask = null, displayRightSideUp = rightSideUp } = options;
+  const { ghostPosit = null, ghostMask = null } = options;
   const dialGap = 52;
   const dialRadius = 19;
   const pinRadius = 5;
-  const sidePrefix = faceName === "left" ? (displayRightSideUp ? "back" : "front") : displayRightSideUp ? "front" : "back";
+  const sidePrefix = faceName === "left" ? (rightSideUp ? "back" : "front") : rightSideUp ? "front" : "back";
   const faceColor = sidePrefix === "front" ? "#1e293b" : "#e2e8f0";
   const dialColor = sidePrefix === "front" ? "#cbd5e1" : "#1e293b";
   const handColor = sidePrefix === "front" ? "#1e293b" : "#f8fafc";
@@ -726,24 +726,12 @@ function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsF
 }
 
 export function renderClockStateSvg(state, options = {}) {
-  const {
-    physicalOrientation = false,
-    uprightReference = true,
-    ghostState = null,
-    ghostMask = null,
-    displayRightSideUp = state.rightSideUp,
-  } = options;
+  const { ghostState = null, ghostMask = null } = options;
   const renderOptions = {
     ghostPosit: ghostState?.posit ?? null,
     ghostMask: ghostMask ?? null,
-    displayRightSideUp,
   };
   const left = renderFace(state.posit, 0, 108, "left", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
   const right = renderFace(state.posit, 9, 324, "right", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
-  const shouldRotate = physicalOrientation && state.rightSideUp !== uprightReference;
-  const body = shouldRotate
-    ? `<g transform="rotate(180 216 112)">${left}${right}</g>`
-    : `${left}${right}`;
-
-  return `<svg viewBox="0 0 432 224" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Clock scramble state">${body}</svg>`;
+  return `<svg viewBox="0 0 432 224" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Clock scramble state">${left}${right}</svg>`;
 }
