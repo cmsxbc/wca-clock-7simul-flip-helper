@@ -1,14 +1,40 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  CLOCK_PILLARS,
   TNOODLE_CLOCK_PREFIX_TURNS,
   TNOODLE_CLOCK_SUFFIX_TURNS,
+  applyClockWheelTurn,
+  applyClockX2,
   applyClockScramble,
+  buildClockWheelMoveVector,
   calculateSevenSimulFlipMemo,
   generateClockScramble,
   parseClockScramble,
   renderClockStateSvg,
 } from "./clock-scramble.js";
+
+function invertClockToken(token) {
+  if (token === "y2") {
+    return "y2";
+  }
+  const match = token.match(/^(UR|DR|DL|UL|ALL|U|R|D|L)(\d)([+-])$/);
+  if (!match) {
+    return null;
+  }
+  const [, label, amount, sign] = match;
+  const inverseSign = sign === "+" ? "-" : "+";
+  return `${label}${amount}${inverseSign}`;
+}
+
+function buildInverseScramble(scramble) {
+  const inverseTokens = parseClockScramble(scramble)
+    .slice()
+    .reverse()
+    .map(invertClockToken)
+    .filter(Boolean);
+  return inverseTokens.join(" ");
+}
 
 test("generateClockScramble creates 15-token WCA clock scramble", () => {
   const scramble = generateClockScramble();
@@ -76,4 +102,75 @@ test("calculateSevenSimulFlipMemo matches published 7simul example", () => {
     ["6", "C", "E", "C", "5", "4"],
   );
   assert.equal(memo.summary, "6 C E C 5 4");
+});
+
+test("7simul memo path is closed-loop with scramble then restore", () => {
+  const scramble = "UR3- DR4- DL1- UL2- U1+ R4+ D2- L3- ALL1+ y2 U3- R1- D4- L4+ ALL1+ DR DL UL";
+  const restore = buildInverseScramble(scramble);
+
+  const scrambledMemo = calculateSevenSimulFlipMemo(scramble);
+  assert.equal(scrambledMemo.summary, "6 C E C 5 4");
+
+  const restoredState = applyClockScramble(`${scramble} ${restore}`, { resetPinsDownAtEnd: true });
+  assert.equal(restoredState.rightSideUp, true);
+  assert.deepEqual(restoredState.posit, new Array(18).fill(0));
+  assert.deepEqual(restoredState.pinsFront, [false, false, false, false]);
+
+  const restoredMemo = calculateSevenSimulFlipMemo(`${scramble} ${restore}`);
+  assert.deepEqual(
+    restoredMemo.steps.map((step) => step.value),
+    [0, 0, 0, 0, 0, 0],
+  );
+  assert.equal(restoredMemo.summary, "0 0 0 0 0 0");
+});
+
+test("derived wheel model reproduces existing abstract turns", () => {
+  const modeled = {
+    UR: buildClockWheelMoveVector({ pinsFront: [false, true, false, false], wheel: "UR" }),
+    DR: buildClockWheelMoveVector({ pinsFront: [false, false, false, true], wheel: "DR" }),
+    DL: buildClockWheelMoveVector({ pinsFront: [false, false, true, false], wheel: "DL" }),
+    UL: buildClockWheelMoveVector({ pinsFront: [true, false, false, false], wheel: "UL" }),
+    U: buildClockWheelMoveVector({ pinsFront: [true, true, false, false], wheel: "UR" }),
+    R: buildClockWheelMoveVector({ pinsFront: [false, true, false, true], wheel: "UR" }),
+    D: buildClockWheelMoveVector({ pinsFront: [false, false, true, true], wheel: "DR" }),
+    L: buildClockWheelMoveVector({ pinsFront: [true, false, true, false], wheel: "UL" }),
+    ALL: buildClockWheelMoveVector({ pinsFront: [true, true, true, true], wheel: "UR" }),
+  };
+
+  for (const [label, vector] of Object.entries(modeled)) {
+    const fromAbstract = applyClockScramble(`${label}1+`).posit;
+    const fromModel = vector.map((value) => ((value % 12) + 12) % 12);
+    assert.deepEqual(fromModel, fromAbstract, label);
+  }
+});
+
+test("three-up and non-up wheel are now modeled explicitly", () => {
+  // Step-1 style pin state in 7simul flip: UL/DR/DL up, then turn UR wheel.
+  const state = { posit: new Array(18).fill(0), rightSideUp: true, pinsFront: [false, false, false, false] };
+  const next = applyClockWheelTurn(state, {
+    pinsFront: [true, false, true, true],
+    wheel: "UR",
+    amount: 1,
+  });
+
+  // Front UR pin is down => only UR dial moves on front.
+  assert.equal(next.posit[2], 1);
+  // Back opposite pillar is up => a 4-dial linked block moves on back.
+  const movedBack = next.posit.slice(9).filter((value) => value !== 0).length;
+  assert.equal(movedBack, 4);
+});
+
+test("x2 flips sides with 180-degree face rotation", () => {
+  const base = {
+    posit: Array.from({ length: 18 }, (_, i) => i),
+    rightSideUp: true,
+    pinsFront: [...CLOCK_PILLARS].map(() => true),
+  };
+  const once = applyClockX2(base);
+  const twice = applyClockX2(once);
+
+  assert.equal(once.rightSideUp, false);
+  assert.deepEqual(once.pinsFront, [false, false, false, false]);
+  assert.deepEqual(twice.posit, base.posit);
+  assert.equal(twice.rightSideUp, true);
 });

@@ -14,6 +14,7 @@ export const TNOODLE_CLOCK_SUFFIX_TURNS = ["U", "R", "D", "L", "ALL"];
 const TURN_SEQUENCE = [...TNOODLE_CLOCK_PREFIX_TURNS];
 const TURN_TO_INDEX = Object.fromEntries(TURN_SEQUENCE.map((name, index) => [name, index]));
 const ALL_PINS_DOWN = [false, false, false, false];
+export const CLOCK_PILLARS = ["UL", "UR", "DL", "DR"];
 const PIN_PATTERN_BY_TURN = {
   UL: [true, false, false, false],
   UR: [false, true, false, false],
@@ -38,6 +39,107 @@ const MOVES = [
   [1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, -1, 0, 0, 0, 0, 0, -1], // L
   [1, 1, 1, 1, 1, 1, 1, 1, 1, -1, 0, -1, 0, 0, 0, -1, 0, -1], // ALL
 ];
+
+const CORNER_TO_DIAL_INDEX = {
+  UL: 0,
+  UR: 2,
+  DL: 6,
+  DR: 8,
+};
+
+const CORNER_NEIGHBORHOODS = {
+  UL: [0, 1, 3, 4],
+  UR: [1, 2, 4, 5],
+  DL: [3, 4, 6, 7],
+  DR: [4, 5, 7, 8],
+};
+
+const FRONT_TO_BACK_CORNER = {
+  UL: "UR",
+  UR: "UL",
+  DL: "DR",
+  DR: "DL",
+};
+
+const ROTATE_180_FACE_INDEXES = [8, 7, 6, 5, 4, 3, 2, 1, 0];
+
+function pillarIndex(label) {
+  return CLOCK_PILLARS.indexOf(label);
+}
+
+function unionNeighborhoods(pillars) {
+  const union = new Set();
+  for (const pillar of pillars) {
+    for (const dialIndex of CORNER_NEIGHBORHOODS[pillar]) {
+      union.add(dialIndex);
+    }
+  }
+  return [...union];
+}
+
+function cornersAsDialSet(pillars) {
+  return pillars.map((pillar) => CORNER_TO_DIAL_INDEX[pillar]);
+}
+
+function vectorFromDialSets(frontFaceStart, frontDialSet, backDialSet, amount) {
+  const backFaceStart = frontFaceStart === 0 ? 9 : 0;
+  const vector = new Array(18).fill(0);
+  for (const dialIndex of frontDialSet) {
+    vector[frontFaceStart + dialIndex] += amount;
+  }
+  for (const dialIndex of backDialSet) {
+    vector[backFaceStart + dialIndex] -= amount;
+  }
+  return vector;
+}
+
+export function buildClockWheelMoveVector({
+  pinsFront,
+  wheel,
+  amount = 1,
+  frontFaceStart = 0,
+}) {
+  if (!Array.isArray(pinsFront) || pinsFront.length !== 4) {
+    throw new Error("pinsFront must be a boolean[4] in UL/UR/DL/DR order");
+  }
+  if (!(wheel in FRONT_TO_BACK_CORNER)) {
+    throw new Error(`Invalid wheel: ${wheel}`);
+  }
+  if (frontFaceStart !== 0 && frontFaceStart !== 9) {
+    throw new Error("frontFaceStart must be 0 or 9");
+  }
+
+  const upPillars = CLOCK_PILLARS.filter((pillar, index) => pinsFront[index]);
+  const downPillars = CLOCK_PILLARS.filter((pillar, index) => !pinsFront[index]);
+  const wheelIsUp = pinsFront[pillarIndex(wheel)];
+  const rotatingPillars = wheelIsUp ? upPillars : downPillars;
+
+  const frontDialSet = wheelIsUp ? unionNeighborhoods(rotatingPillars) : cornersAsDialSet(rotatingPillars);
+  const rotatingBackPillars = rotatingPillars.map((pillar) => FRONT_TO_BACK_CORNER[pillar]);
+  const backDialSet = wheelIsUp ? cornersAsDialSet(rotatingBackPillars) : unionNeighborhoods(rotatingBackPillars);
+  return vectorFromDialSets(frontFaceStart, frontDialSet, backDialSet, amount);
+}
+
+export function applyClockWheelTurn(state, { pinsFront, wheel, amount = 1, frontFaceStart = 0 }) {
+  const vector = buildClockWheelMoveVector({ pinsFront, wheel, amount, frontFaceStart });
+  return {
+    ...state,
+    posit: state.posit.map((value, index) => mod12(value + vector[index])),
+  };
+}
+
+export function applyClockX2(state) {
+  const front = state.posit.slice(0, 9);
+  const back = state.posit.slice(9, 18);
+  const rotatedFront = ROTATE_180_FACE_INDEXES.map((index) => front[index]);
+  const rotatedBack = ROTATE_180_FACE_INDEXES.map((index) => back[index]);
+  return {
+    ...state,
+    posit: [...rotatedBack, ...rotatedFront],
+    rightSideUp: !state.rightSideUp,
+    pinsFront: [...ALL_PINS_DOWN],
+  };
+}
 
 function randomTurnValue() {
   return Math.floor(Math.random() * 12) - 5;
