@@ -86,6 +86,9 @@ function parseTurnToken(token) {
   if (token === "y2") {
     return { type: "flip" };
   }
+  if (PIN_PATTERN_BY_TURN[token]) {
+    return { type: "pin", pinsFront: [...PIN_PATTERN_BY_TURN[token]] };
+  }
   const match = token.match(/^(UR|DR|DL|UL|ALL|U|R|D|L)(\d)([+-])$/);
   if (!match) {
     throw new Error(`Invalid clock token: ${token}`);
@@ -111,6 +114,10 @@ export function applyClockScramble(scramble, options = {}) {
       pinsFront = [...ALL_PINS_DOWN];
       continue;
     }
+    if (move.type === "pin") {
+      pinsFront = [...move.pinsFront];
+      continue;
+    }
 
     pinsFront = [...PIN_PATTERN_BY_TURN[move.label]];
     const moveIndex = TURN_TO_INDEX[move.label];
@@ -123,6 +130,117 @@ export function applyClockScramble(scramble, options = {}) {
   }
 
   return { posit, rightSideUp, pinsFront };
+}
+
+export function normalizeClockDelta(value) {
+  const modded = mod12(value);
+  return modded <= 6 ? modded : modded - 12;
+}
+
+function encodeMemoValue(value) {
+  if (value >= 0) {
+    return String(value);
+  }
+  return String.fromCharCode("A".charCodeAt(0) + Math.abs(value) - 1);
+}
+
+function getFaceDialMap(state) {
+  // 7simul flip memo reads "front" as the side that is up during scramble.
+  const p = state.posit;
+  const front = p.slice(9, 18);
+  const backRaw = p.slice(0, 9);
+  // Back is read after x2 flip while facing it, which corresponds to 180deg rotation.
+  const back = [8, 7, 6, 5, 4, 3, 2, 1, 0].map((index) => backRaw[index]);
+  return {
+    UL: front[0],
+    U: front[1],
+    UR: front[2],
+    L: front[3],
+    C: front[4],
+    R: front[5],
+    DL: front[6],
+    D: front[7],
+    DR: front[8],
+    ul: back[0],
+    u: back[1],
+    ur: back[2],
+    l: back[3],
+    c: back[4],
+    r: back[5],
+    dl: back[6],
+    d: back[7],
+    dr: back[8],
+  };
+}
+
+function edgeDelta(map, from, to) {
+  const rawDiff = map[to] - map[from];
+  return {
+    from,
+    to,
+    fromValue: map[from],
+    toValue: map[to],
+    rawDiff,
+    value: normalizeClockDelta(rawDiff),
+  };
+}
+
+export function calculateSevenSimulFlipMemo(scramble) {
+  const state = applyClockScramble(scramble);
+  const dials = getFaceDialMap(state);
+  const steps = [
+    {
+      id: 1,
+      description: "(R→D) + (l→ul)",
+      terms: [
+        edgeDelta(dials, "R", "D"),
+        edgeDelta(dials, "l", "ul"),
+      ],
+    },
+    {
+      id: 2,
+      description: "u→c",
+      terms: [edgeDelta(dials, "u", "c")],
+    },
+    {
+      id: 3,
+      description: "l→u",
+      terms: [edgeDelta(dials, "l", "u")],
+    },
+    {
+      id: 4,
+      description: "(r→d) + (L→UL)",
+      terms: [
+        edgeDelta(dials, "r", "d"),
+        edgeDelta(dials, "L", "UL"),
+      ],
+    },
+    {
+      id: 5,
+      description: "U→C",
+      terms: [edgeDelta(dials, "U", "C")],
+    },
+    {
+      id: 6,
+      description: "L→U",
+      terms: [edgeDelta(dials, "L", "U")],
+    },
+  ].map((step) => {
+    const rawSum = step.terms.reduce((sum, term) => sum + term.value, 0);
+    const value = normalizeClockDelta(rawSum);
+    return {
+      ...step,
+      rawSum,
+      value,
+      encoded: encodeMemoValue(value),
+    };
+  });
+
+  return {
+    summary: steps.map((step) => step.encoded).join(" "),
+    steps,
+    dials,
+  };
 }
 
 function handPoint(cx, cy, angleDeg, length) {

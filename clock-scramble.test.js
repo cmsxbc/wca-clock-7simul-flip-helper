@@ -4,6 +4,7 @@ import {
   TNOODLE_CLOCK_PREFIX_TURNS,
   TNOODLE_CLOCK_SUFFIX_TURNS,
   applyClockScramble,
+  calculateSevenSimulFlipMemo,
   generateClockScramble,
   parseClockScramble,
   renderClockStateSvg,
@@ -60,4 +61,19 @@ test("renderClockStateSvg returns svg markup", () => {
 test("applyClockScramble supports optional final pin reset", () => {
   const state = applyClockScramble("UR1+ ALL2+", { resetPinsDownAtEnd: true });
   assert.deepEqual(state.pinsFront, [false, false, false, false]);
+});
+
+test("calculateSevenSimulFlipMemo matches published 7simul example", () => {
+  const scramble = "UR3- DR4- DL1- UL2- U1+ R4+ D2- L3- ALL1+ y2 U3- R1- D4- L4+ ALL1+ DR DL UL";
+  const memo = calculateSevenSimulFlipMemo(scramble);
+
+  assert.deepEqual(
+    memo.steps.map((step) => step.value),
+    [6, -3, -5, -3, 5, 4],
+  );
+  assert.deepEqual(
+    memo.steps.map((step) => step.encoded),
+    ["6", "C", "E", "C", "5", "4"],
+  );
+  assert.equal(memo.summary, "6 C E C 5 4");
 });

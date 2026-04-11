@@ -132,6 +132,66 @@
         padding: 4px;
       }
 
+      .memo-block {
+        margin-top: 8px;
+        padding: 8px 10px;
+        background: #0b1222;
+        border: 1px solid #334155;
+        border-radius: 8px;
+      }
+
+      .memo-summary {
+        margin: 0;
+        font-weight: 700;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
+      .memo-details {
+        margin-top: 6px;
+      }
+
+      .memo-details summary {
+        cursor: pointer;
+        color: #93c5fd;
+      }
+
+      .memo-table-wrap {
+        margin-top: 8px;
+        overflow-x: auto;
+      }
+
+      .memo-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        font-size: 0.92rem;
+      }
+
+      .memo-table th,
+      .memo-table td {
+        border: 1px solid #334155;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .memo-table th {
+        background: #162038;
+        color: #bfdbfe;
+        font-weight: 700;
+      }
+
+      .memo-table td:nth-child(1),
+      .memo-table td:nth-child(5) {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        white-space: nowrap;
+      }
+
+      .memo-table td:nth-child(2),
+      .memo-table td:nth-child(4) {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
       .meta {
         margin-top: 22px;
         color: #94a3b8;

@@ -1,4 +1,4 @@
-import { applyClockScramble, generateClockScrambles, renderClockStateSvg } from "./clock-scramble.js";
+import { applyClockScramble, calculateSevenSimulFlipMemo, generateClockScrambles, renderClockStateSvg } from "./clock-scramble.js";
 
 const form = document.querySelector("#scramble-form");
 const countInput = document.querySelector("#count");
@@ -8,6 +8,54 @@ const statusText = document.querySelector("#status");
 const customForm = document.querySelector("#custom-form");
 const customInput = document.querySelector("#custom-scramble");
 const resetPinsCheckbox = document.querySelector("#reset-pins");
+
+function formatTerm(term) {
+  const prefix = `${term.from}(${term.fromValue})→${term.to}(${term.toValue})`;
+  const normalized = term.value >= 0 ? `+${term.value}` : `${term.value}`;
+  return `${prefix} = ${normalized}`;
+}
+
+function renderMemoBlock(scramble) {
+  const memo = calculateSevenSimulFlipMemo(scramble);
+  const wrapper = document.createElement("section");
+  wrapper.className = "memo-block";
+
+  const summary = document.createElement("p");
+  summary.className = "memo-summary";
+  summary.textContent = `7simul flip 记忆：${memo.summary}`;
+
+  const details = document.createElement("details");
+  details.className = "memo-details";
+  const detailsSummary = document.createElement("summary");
+  detailsSummary.textContent = "展开来源计算";
+  details.appendChild(detailsSummary);
+
+  const tableWrap = document.createElement("div");
+  tableWrap.className = "memo-table-wrap";
+  const table = document.createElement("table");
+  table.className = "memo-table";
+
+  const thead = document.createElement("thead");
+  thead.innerHTML =
+    "<tr><th>步骤</th><th>公式</th><th>分项差值</th><th>合计(归一化)</th><th>编码</th></tr>";
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  for (const step of memo.steps) {
+    const row = document.createElement("tr");
+    const terms = step.terms.map(formatTerm).join("，");
+    const normalized = step.value >= 0 ? `+${step.value}` : `${step.value}`;
+    const rawPart = step.rawSum === step.value ? `${normalized}` : `${step.rawSum} -> ${normalized}`;
+    row.innerHTML = `<td>${step.id}</td><td>${step.description}</td><td>${terms}</td><td>${rawPart}</td><td>${step.encoded}</td>`;
+    tbody.appendChild(row);
+  }
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  details.appendChild(tableWrap);
+
+  wrapper.append(summary, details);
+  return wrapper;
+}
 
 function renderScrambles(scrambles) {
   outputList.innerHTML = "";
@@ -26,7 +74,9 @@ function renderScrambles(scrambles) {
     preview.className = "scramble-preview";
     preview.innerHTML = renderClockStateSvg(applyClockScramble(scramble, { resetPinsDownAtEnd }));
 
-    item.append(text, preview);
+    const memoBlock = renderMemoBlock(scramble);
+
+    item.append(text, preview, memoBlock);
     outputList.appendChild(item);
   }
 
