@@ -140,6 +140,28 @@
         border-radius: 8px;
       }
 
+      .strict-restore-block {
+        margin-top: 8px;
+        padding: 8px 10px;
+        background: #0b1222;
+        border: 1px solid #334155;
+        border-radius: 8px;
+      }
+
+      .strict-restore-title {
+        margin: 0 0 6px;
+        font-weight: 700;
+      }
+
+      .strict-step {
+        margin-top: 8px;
+      }
+
+      .strict-step-title {
+        margin: 0 0 6px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
       .memo-summary {
         margin: 0;
         font-weight: 700;
@@ -223,6 +245,10 @@
             <label class="inline" for="reset-pins">
               <input id="reset-pins" type="checkbox" checked />
               结束时将 pins 全部按下（WCA 常用展示）
+            </label>
+            <label class="inline" for="show-strict-restore">
+              <input id="show-strict-restore" type="checkbox" />
+              显示 7simul 逐步执行
             </label>
           </div>
         </form>

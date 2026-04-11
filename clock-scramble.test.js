@@ -10,6 +10,7 @@ import {
   buildClockWheelMoveVector,
   calculateSevenSimulFlipMemo,
   executeSevenSimulFlipRestore,
+  executeSevenSimulFlipRestoreWithTrace,
   generateClockScramble,
   parseClockScramble,
   renderClockStateSvg,
@@ -181,7 +182,7 @@ test("strict 7simul flip execution restores published example", () => {
   const restored = executeSevenSimulFlipRestore(scramble);
 
   assert.deepEqual(restored.posit, new Array(18).fill(0));
-  assert.equal(restored.rightSideUp, false);
+  assert.equal(restored.rightSideUp, true);
   assert.deepEqual(restored.pinsFront, [true, false, false, true]);
 });
 
@@ -191,4 +192,13 @@ test("strict 7simul flip execution forms closed loop on random scrambles", () =>
     const restored = executeSevenSimulFlipRestore(scramble);
     assert.deepEqual(restored.posit, new Array(18).fill(0), scramble);
   }
+});
+
+test("strict 7simul flip trace contains eight step snapshots", () => {
+  const scramble = "UR3- DR4- DL1- UL2- U1+ R4+ D2- L3- ALL1+ y2 U3- R1- D4- L4+ ALL1+ DR DL UL";
+  const traced = executeSevenSimulFlipRestoreWithTrace(scramble);
+
+  assert.equal(traced.trace.length, 8);
+  assert.deepEqual(traced.trace.map((step) => step.step), [1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.deepEqual(traced.state.posit, new Array(18).fill(0));
 });

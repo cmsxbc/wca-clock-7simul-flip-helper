@@ -1,4 +1,10 @@
-import { applyClockScramble, calculateSevenSimulFlipMemo, generateClockScrambles, renderClockStateSvg } from "./clock-scramble.js";
+import {
+  applyClockScramble,
+  calculateSevenSimulFlipMemo,
+  executeSevenSimulFlipRestoreWithTrace,
+  generateClockScrambles,
+  renderClockStateSvg,
+} from "./clock-scramble.js";
 
 const form = document.querySelector("#scramble-form");
 const countInput = document.querySelector("#count");
@@ -8,6 +14,7 @@ const statusText = document.querySelector("#status");
 const customForm = document.querySelector("#custom-form");
 const customInput = document.querySelector("#custom-scramble");
 const resetPinsCheckbox = document.querySelector("#reset-pins");
+const showStrictRestoreCheckbox = document.querySelector("#show-strict-restore");
 
 function formatTerm(term) {
   const prefix = `${term.from}(${term.fromValue})→${term.to}(${term.toValue})`;
@@ -57,9 +64,72 @@ function renderMemoBlock(scramble) {
   return wrapper;
 }
 
+function renderStrictRestoreBlock(scramble) {
+  const wrapper = document.createElement("section");
+  wrapper.className = "strict-restore-block";
+
+  const title = document.createElement("p");
+  title.className = "strict-restore-title";
+
+  try {
+    const restored = executeSevenSimulFlipRestoreWithTrace(scramble);
+    const finalState = restored.state;
+    const solved = finalState.posit.every((value) => value === 0);
+    title.textContent = solved ? "7simul 逐步执行（闭环成功）" : "7simul 逐步执行（闭环失败）";
+
+    wrapper.append(title);
+    const legend = document.createElement("p");
+    legend.className = "status";
+    legend.textContent = "橙色虚线指针表示本步操作前的位置（仅标出发生变化的表盘）。";
+    wrapper.append(legend);
+
+    let previousState = restored.initialState;
+    for (const step of restored.trace) {
+      const stepBlock = document.createElement("section");
+      stepBlock.className = "strict-step";
+
+      const stepText = document.createElement("p");
+      stepText.className = "strict-step-title";
+      const wheels =
+        step.wheelTurns.length === 0
+          ? "x2"
+          : step.wheelTurns
+              .map((turn) => `${turn.wheel}${Math.abs(turn.amount)}${turn.amount >= 0 ? "+" : "-"}`)
+              .join("，");
+      stepText.textContent = `${step.step}. ${step.description}（${wheels}）`;
+
+      const ghostMask =
+        previousState && previousState.rightSideUp === step.state.rightSideUp
+          ? step.state.posit.map((value, index) => value !== previousState.posit[index])
+          : new Array(18).fill(false);
+      // execute-on-back baseline with physical x2 display:
+      // before x2 -> left light/right dark; after x2 -> left dark/right light
+      const displayRightSideUp = !step.state.rightSideUp;
+      const stepPreview = document.createElement("div");
+      stepPreview.className = "scramble-preview";
+      stepPreview.innerHTML = renderClockStateSvg(step.state, {
+        physicalOrientation: true,
+        uprightReference: false,
+        displayRightSideUp,
+        ghostState: previousState,
+        ghostMask,
+      });
+      stepBlock.append(stepText, stepPreview);
+      wrapper.append(stepBlock);
+      previousState = step.state;
+    }
+  } catch (error) {
+    title.textContent = `严格 7simul flip 执行失败：${error.message}`;
+    wrapper.append(title);
+  }
+
+  return wrapper;
+}
+
 function renderScrambles(scrambles) {
   outputList.innerHTML = "";
   const resetPinsDownAtEnd = resetPinsCheckbox.checked;
+  const showStrictRestore = showStrictRestoreCheckbox.checked;
 
   for (const [index, scramble] of scrambles.entries()) {
     const item = document.createElement("li");
@@ -75,8 +145,12 @@ function renderScrambles(scrambles) {
     preview.innerHTML = renderClockStateSvg(applyClockScramble(scramble, { resetPinsDownAtEnd }));
 
     const memoBlock = renderMemoBlock(scramble);
+    const strictRestoreBlock = showStrictRestore ? renderStrictRestoreBlock(scramble) : null;
 
     item.append(text, preview, memoBlock);
+    if (strictRestoreBlock) {
+      item.append(strictRestoreBlock);
+    }
     outputList.appendChild(item);
   }
 
@@ -129,6 +203,13 @@ copyButton.addEventListener("click", async () => {
 });
 
 resetPinsCheckbox.addEventListener("change", () => {
+  const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  if (current.length > 0) {
+    renderScrambles(current);
+  }
+});
+
+showStrictRestoreCheckbox.addEventListener("change", () => {
   const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
   if (current.length > 0) {
     renderScrambles(current);

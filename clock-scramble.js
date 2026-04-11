@@ -427,14 +427,29 @@ function stateInMemoExecutionFrame(scrambleState) {
   // 7simul flip memo reads the side-up-during-scramble as front.
   return {
     posit: [...scrambleState.posit.slice(9, 18), ...scrambleState.posit.slice(0, 9)],
-    rightSideUp: true,
+    // Execution starts from the opposite viewing side (execute-on-black).
+    rightSideUp: false,
     pinsFront: [...ALL_PINS_DOWN],
   };
 }
 
 export function executeSevenSimulFlipRestore(scramble) {
+  return executeSevenSimulFlipRestoreWithTrace(scramble).state;
+}
+
+function cloneState(state) {
+  return {
+    posit: [...state.posit],
+    rightSideUp: state.rightSideUp,
+    pinsFront: [...state.pinsFront],
+  };
+}
+
+export function executeSevenSimulFlipRestoreWithTrace(scramble) {
   const memoValues = calculateSevenSimulFlipMemo(scramble).steps.map((step) => step.value);
   let state = stateInMemoExecutionFrame(applyClockScramble(scramble));
+  const initialState = cloneState(state);
+  const trace = [];
 
   const pinsStepA = [true, false, true, true]; // UL DR DL
   const pinsStepB = [true, false, true, false]; // UL DL
@@ -444,111 +459,193 @@ export function executeSevenSimulFlipRestore(scramble) {
   // 1) UL/DR/DL up: UL <- step1, UR <- step2
   state = executeWheel(state, pinsStepA, "UL", memoValues[0]);
   state = executeWheel(state, pinsStepA, "UR", memoValues[1]);
+  trace.push({
+    step: 1,
+    description: "UL/DR/DL up：UL 执行 memo1，UR 执行 memo2",
+    wheelTurns: [
+      { wheel: "UL", amount: memoValues[0] },
+      { wheel: "UR", amount: memoValues[1] },
+    ],
+    state: cloneState(state),
+  });
   // 2) UL/DL up: UL aligns D to R, UR <- step3
+  const step2Align = amountToMatchTarget(state, {
+    pinsFront: pinsStepB,
+    wheel: "UL",
+    sources: [DIAL_INDEX.D],
+    target: DIAL_INDEX.R,
+  });
   state = executeWheel(
     state,
     pinsStepB,
     "UL",
-    amountToMatchTarget(state, {
-      pinsFront: pinsStepB,
-      wheel: "UL",
-      sources: [DIAL_INDEX.D],
-      target: DIAL_INDEX.R,
-    }),
+    step2Align,
   );
   state = executeWheel(state, pinsStepB, "UR", memoValues[2]);
+  trace.push({
+    step: 2,
+    description: "UL/DL up：UL 对齐 D→R，UR 执行 memo3",
+    wheelTurns: [
+      { wheel: "UL", amount: step2Align },
+      { wheel: "UR", amount: memoValues[2] },
+    ],
+    state: cloneState(state),
+  });
   // 3) UL up: UL aligns C to D&R, UR aligns DR to D&R
+  const step3AlignC = amountToMatchTarget(state, {
+    pinsFront: pinsStepC,
+    wheel: "UL",
+    sources: [DIAL_INDEX.C],
+    target: DIAL_INDEX.D,
+  });
   state = executeWheel(
     state,
     pinsStepC,
     "UL",
-    amountToMatchTarget(state, {
-      pinsFront: pinsStepC,
-      wheel: "UL",
-      sources: [DIAL_INDEX.C],
-      target: DIAL_INDEX.D,
-    }),
+    step3AlignC,
   );
+  const step3AlignDr = amountToMatchTarget(state, {
+    pinsFront: pinsStepC,
+    wheel: "UR",
+    sources: [DIAL_INDEX.DR],
+    target: DIAL_INDEX.D,
+  });
   state = executeWheel(
     state,
     pinsStepC,
     "UR",
-    amountToMatchTarget(state, {
-      pinsFront: pinsStepC,
-      wheel: "UR",
-      sources: [DIAL_INDEX.DR],
-      target: DIAL_INDEX.D,
-    }),
+    step3AlignDr,
   );
+  trace.push({
+    step: 3,
+    description: "UL up：UL 对齐 C→D&R，UR 对齐 DR→D&R",
+    wheelTurns: [
+      { wheel: "UL", amount: step3AlignC },
+      { wheel: "UR", amount: step3AlignDr },
+    ],
+    state: cloneState(state),
+  });
 
   // 4) x2
   state = applyClockX2(state);
+  trace.push({
+    step: 4,
+    description: "x2 翻面",
+    wheelTurns: [],
+    state: cloneState(state),
+  });
 
   // 5) UL/DR/DL up: UL <- step4, UR <- step5
   state = executeWheel(state, pinsStepA, "UL", memoValues[3]);
   state = executeWheel(state, pinsStepA, "UR", memoValues[4]);
+  trace.push({
+    step: 5,
+    description: "UL/DR/DL up：UL 执行 memo4，UR 执行 memo5",
+    wheelTurns: [
+      { wheel: "UL", amount: memoValues[3] },
+      { wheel: "UR", amount: memoValues[4] },
+    ],
+    state: cloneState(state),
+  });
   // 6) UL/DL up: UL aligns D to R, UR <- step6
+  const step6Align = amountToMatchTarget(state, {
+    pinsFront: pinsStepB,
+    wheel: "UL",
+    sources: [DIAL_INDEX.D],
+    target: DIAL_INDEX.R,
+  });
   state = executeWheel(
     state,
     pinsStepB,
     "UL",
-    amountToMatchTarget(state, {
-      pinsFront: pinsStepB,
-      wheel: "UL",
-      sources: [DIAL_INDEX.D],
-      target: DIAL_INDEX.R,
-    }),
+    step6Align,
   );
   state = executeWheel(state, pinsStepB, "UR", memoValues[5]);
+  trace.push({
+    step: 6,
+    description: "UL/DL up：UL 对齐 D→R，UR 执行 memo6",
+    wheelTurns: [
+      { wheel: "UL", amount: step6Align },
+      { wheel: "UR", amount: memoValues[5] },
+    ],
+    state: cloneState(state),
+  });
   // 7) UL up: UL aligns UL/U/L/C to D&R, UR aligns DR to D&R
+  const step7AlignBlock = amountToMatchTarget(state, {
+    pinsFront: pinsStepC,
+    wheel: "UL",
+    sources: [DIAL_INDEX.UL, DIAL_INDEX.U, DIAL_INDEX.L, DIAL_INDEX.C],
+    target: DIAL_INDEX.D,
+  });
   state = executeWheel(
     state,
     pinsStepC,
     "UL",
-    amountToMatchTarget(state, {
-      pinsFront: pinsStepC,
-      wheel: "UL",
-      sources: [DIAL_INDEX.UL, DIAL_INDEX.U, DIAL_INDEX.L, DIAL_INDEX.C],
-      target: DIAL_INDEX.D,
-    }),
+    step7AlignBlock,
   );
+  const step7AlignDr = amountToMatchTarget(state, {
+    pinsFront: pinsStepC,
+    wheel: "UR",
+    sources: [DIAL_INDEX.DR],
+    target: DIAL_INDEX.D,
+  });
   state = executeWheel(
     state,
     pinsStepC,
     "UR",
-    amountToMatchTarget(state, {
-      pinsFront: pinsStepC,
-      wheel: "UR",
-      sources: [DIAL_INDEX.DR],
-      target: DIAL_INDEX.D,
-    }),
+    step7AlignDr,
   );
+  trace.push({
+    step: 7,
+    description: "UL up：UL 对齐左上四盘→D&R，UR 对齐 DR→D&R",
+    wheelTurns: [
+      { wheel: "UL", amount: step7AlignBlock },
+      { wheel: "UR", amount: step7AlignDr },
+    ],
+    state: cloneState(state),
+  });
 
   // 8) UL/DR up: UL aligns all except UR/DL to 12, UR aligns UR/DL to 12
+  const step8Slash = amountToValue(state, {
+    pinsFront: pinsStepFinal,
+    wheel: "UL",
+    sources: [DIAL_INDEX.UL, DIAL_INDEX.U, DIAL_INDEX.L, DIAL_INDEX.C, DIAL_INDEX.R, DIAL_INDEX.D, DIAL_INDEX.DR],
+    targetValue: 0,
+  });
   state = executeWheel(
     state,
     pinsStepFinal,
     "UL",
-    amountToValue(state, {
-      pinsFront: pinsStepFinal,
-      wheel: "UL",
-      sources: [DIAL_INDEX.UL, DIAL_INDEX.U, DIAL_INDEX.L, DIAL_INDEX.C, DIAL_INDEX.R, DIAL_INDEX.D, DIAL_INDEX.DR],
-      targetValue: 0,
-    }),
+    step8Slash,
   );
+  const step8Pair = amountToValue(state, {
+    pinsFront: pinsStepFinal,
+    wheel: "UR",
+    sources: [DIAL_INDEX.UR, DIAL_INDEX.DL],
+    targetValue: 0,
+  });
   state = executeWheel(
     state,
     pinsStepFinal,
     "UR",
-    amountToValue(state, {
-      pinsFront: pinsStepFinal,
-      wheel: "UR",
-      sources: [DIAL_INDEX.UR, DIAL_INDEX.DL],
-      targetValue: 0,
-    }),
+    step8Pair,
   );
+  trace.push({
+    step: 8,
+    description: "UL/DR up：UL 执行 slash，UR 对齐 UR&DL 到 12 点",
+    wheelTurns: [
+      { wheel: "UL", amount: step8Slash },
+      { wheel: "UR", amount: step8Pair },
+    ],
+    state: cloneState(state),
+  });
 
-  return state;
+  return {
+    initialState,
+    state,
+    memoValues,
+    trace,
+  };
 }
 
 function handPoint(cx, cy, angleDeg, length) {
@@ -572,12 +669,13 @@ function renderTicks(cx, cy, sidePrefix) {
   return ticks.join("");
 }
 
-function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsFront) {
+function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsFront, options = {}) {
   const pieces = [];
+  const { ghostPosit = null, ghostMask = null, displayRightSideUp = rightSideUp } = options;
   const dialGap = 52;
   const dialRadius = 19;
   const pinRadius = 5;
-  const sidePrefix = faceName === "left" ? (rightSideUp ? "back" : "front") : rightSideUp ? "front" : "back";
+  const sidePrefix = faceName === "left" ? (displayRightSideUp ? "back" : "front") : displayRightSideUp ? "front" : "back";
   const faceColor = sidePrefix === "front" ? "#1e293b" : "#e2e8f0";
   const dialColor = sidePrefix === "front" ? "#cbd5e1" : "#1e293b";
   const handColor = sidePrefix === "front" ? "#1e293b" : "#f8fafc";
@@ -593,8 +691,14 @@ function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsF
       const cx = originX + (col - 1) * dialGap;
       const cy = 112 + (row - 1) * dialGap;
       const end = handPoint(cx, cy, value * 30, 13);
+      const showGhost = Array.isArray(ghostPosit) && Array.isArray(ghostMask) && ghostMask[idx];
+      const ghostValue = showGhost ? ghostPosit[idx] : null;
+      const ghostEnd = showGhost ? handPoint(cx, cy, ghostValue * 30, 13) : null;
+      const ghostLine = showGhost
+        ? `<line x1="${cx}" y1="${cy}" x2="${ghostEnd.x}" y2="${ghostEnd.y}" stroke="#f59e0b" stroke-opacity="0.75" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="4 3" />`
+        : "";
       pieces.push(
-        `<g class="clock-face"><circle cx="${cx}" cy="${cy}" r="${dialRadius}" fill="${dialColor}" stroke="#334155" stroke-width="1.5" />${renderTicks(cx, cy, sidePrefix)}<line x1="${cx}" y1="${cy}" x2="${end.x}" y2="${end.y}" stroke="${handColor}" stroke-width="3" stroke-linecap="round" /><circle cx="${cx}" cy="${cy}" r="2.4" fill="${handColor}" /></g>`,
+        `<g class="clock-face"><circle cx="${cx}" cy="${cy}" r="${dialRadius}" fill="${dialColor}" stroke="#334155" stroke-width="1.5" />${renderTicks(cx, cy, sidePrefix)}${ghostLine}<line x1="${cx}" y1="${cy}" x2="${end.x}" y2="${end.y}" stroke="${handColor}" stroke-width="3" stroke-linecap="round" /><circle cx="${cx}" cy="${cy}" r="2.4" fill="${handColor}" /></g>`,
       );
     }
   }
@@ -613,16 +717,33 @@ function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsF
     const up = pinsForFace[index];
     const cls = up ? "pin pin-up" : "pin pin-down";
     const fill = up ? pinUpColor : pinDownColor;
-    const radius = up ? pinRadius + 0.9 : pinRadius - 0.6;
+    // Perspective cue: raised pin appears farther, so render it slightly smaller.
+    const radius = up ? pinRadius - 0.6 : pinRadius + 0.9;
     pieces.push(`<circle class="${cls}" cx="${cx}" cy="${cy}" r="${radius}" fill="${fill}" stroke="#0f172a" stroke-width="1" />`);
   }
 
   return pieces.join("");
 }
 
-export function renderClockStateSvg(state) {
-  const left = renderFace(state.posit, 0, 108, "left", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN);
-  const right = renderFace(state.posit, 9, 324, "right", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN);
+export function renderClockStateSvg(state, options = {}) {
+  const {
+    physicalOrientation = false,
+    uprightReference = true,
+    ghostState = null,
+    ghostMask = null,
+    displayRightSideUp = state.rightSideUp,
+  } = options;
+  const renderOptions = {
+    ghostPosit: ghostState?.posit ?? null,
+    ghostMask: ghostMask ?? null,
+    displayRightSideUp,
+  };
+  const left = renderFace(state.posit, 0, 108, "left", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
+  const right = renderFace(state.posit, 9, 324, "right", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
+  const shouldRotate = physicalOrientation && state.rightSideUp !== uprightReference;
+  const body = shouldRotate
+    ? `<g transform="rotate(180 216 112)">${left}${right}</g>`
+    : `${left}${right}`;
 
-  return `<svg viewBox="0 0 432 224" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Clock scramble state">${left}${right}</svg>`;
+  return `<svg viewBox="0 0 432 224" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Clock scramble state">${body}</svg>`;
 }
