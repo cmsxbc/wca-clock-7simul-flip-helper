@@ -102,11 +102,16 @@ function renderStrictRestoreBlock(scramble) {
         previousState && previousState.rightSideUp === step.state.rightSideUp
           ? step.state.posit.map((value, index) => value !== previousState.posit[index])
           : new Array(18).fill(false);
+      // execute-on-back color mapping:
+      // before x2 => left light / right dark
+      // after x2  => left dark / right light
+      const displayRightSideUp = !step.state.rightSideUp;
       const stepPreview = document.createElement("div");
       stepPreview.className = "scramble-preview";
       stepPreview.innerHTML = renderClockStateSvg(step.state, {
         ghostState: previousState,
         ghostMask,
+        displayRightSideUp,
       });
       stepBlock.append(stepText, stepPreview);
       wrapper.append(stepBlock);

@@ -671,11 +671,11 @@ function renderTicks(cx, cy, sidePrefix) {
 
 function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsFront, options = {}) {
   const pieces = [];
-  const { ghostPosit = null, ghostMask = null } = options;
+  const { ghostPosit = null, ghostMask = null, displayRightSideUp = rightSideUp } = options;
   const dialGap = 52;
   const dialRadius = 19;
   const pinRadius = 5;
-  const sidePrefix = faceName === "left" ? (rightSideUp ? "back" : "front") : rightSideUp ? "front" : "back";
+  const sidePrefix = faceName === "left" ? (displayRightSideUp ? "back" : "front") : displayRightSideUp ? "front" : "back";
   const faceColor = sidePrefix === "front" ? "#1e293b" : "#e2e8f0";
   const dialColor = sidePrefix === "front" ? "#cbd5e1" : "#1e293b";
   const handColor = sidePrefix === "front" ? "#1e293b" : "#f8fafc";
@@ -726,10 +726,11 @@ function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsF
 }
 
 export function renderClockStateSvg(state, options = {}) {
-  const { ghostState = null, ghostMask = null } = options;
+  const { ghostState = null, ghostMask = null, displayRightSideUp = state.rightSideUp } = options;
   const renderOptions = {
     ghostPosit: ghostState?.posit ?? null,
     ghostMask: ghostMask ?? null,
+    displayRightSideUp,
   };
   const left = renderFace(state.posit, 0, 108, "left", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
   const right = renderFace(state.posit, 9, 324, "right", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
