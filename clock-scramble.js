@@ -656,14 +656,16 @@ function handPoint(cx, cy, angleDeg, length) {
   };
 }
 
-function renderTicks(cx, cy, sidePrefix) {
+function renderTicks(cx, cy, sidePrefix, options = {}) {
+  const { twelveDown = false } = options;
   const ticks = [];
   const radius = 16;
+  const topTickIndex = twelveDown ? 6 : 0;
   for (let i = 0; i < 12; i += 1) {
     const p = handPoint(cx, cy, i * 30, radius);
-    const topClass = i === 0 ? " tick-top" : "";
-    const fill = sidePrefix === "front" ? (i === 0 ? "#fbbf24" : "#94a3b8") : i === 0 ? "#fb923c" : "#64748b";
-    const r = i === 0 ? 1.9 : 1.1;
+    const topClass = i === topTickIndex ? " tick-top" : "";
+    const fill = sidePrefix === "front" ? (i === topTickIndex ? "#fbbf24" : "#94a3b8") : i === topTickIndex ? "#fb923c" : "#64748b";
+    const r = i === topTickIndex ? 1.9 : 1.1;
     ticks.push(`<circle class="tick-mark${topClass}" cx="${p.x}" cy="${p.y}" r="${r}" fill="${fill}" />`);
   }
   return ticks.join("");
@@ -671,7 +673,13 @@ function renderTicks(cx, cy, sidePrefix) {
 
 function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsFront, options = {}) {
   const pieces = [];
-  const { ghostPosit = null, ghostMask = null, displayRightSideUp = rightSideUp } = options;
+  const {
+    ghostPosit = null,
+    ghostMask = null,
+    displayRightSideUp = rightSideUp,
+    twelveDown = false,
+    handOffsetTurns = 0,
+  } = options;
   const dialGap = 52;
   const dialRadius = 19;
   const pinRadius = 5;
@@ -690,15 +698,17 @@ function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsF
       const value = posit[idx];
       const cx = originX + (col - 1) * dialGap;
       const cy = 112 + (row - 1) * dialGap;
-      const end = handPoint(cx, cy, value * 30, 13);
+      const displayValue = mod12(value + handOffsetTurns);
+      const end = handPoint(cx, cy, displayValue * 30, 13);
       const showGhost = Array.isArray(ghostPosit) && Array.isArray(ghostMask) && ghostMask[idx];
       const ghostValue = showGhost ? ghostPosit[idx] : null;
-      const ghostEnd = showGhost ? handPoint(cx, cy, ghostValue * 30, 13) : null;
+      const ghostDisplayValue = showGhost ? mod12(ghostValue + handOffsetTurns) : null;
+      const ghostEnd = showGhost ? handPoint(cx, cy, ghostDisplayValue * 30, 13) : null;
       const ghostLine = showGhost
         ? `<line x1="${cx}" y1="${cy}" x2="${ghostEnd.x}" y2="${ghostEnd.y}" stroke="#f59e0b" stroke-opacity="0.75" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="4 3" />`
         : "";
       pieces.push(
-        `<g class="clock-face"><circle cx="${cx}" cy="${cy}" r="${dialRadius}" fill="${dialColor}" stroke="#334155" stroke-width="1.5" />${renderTicks(cx, cy, sidePrefix)}${ghostLine}<line x1="${cx}" y1="${cy}" x2="${end.x}" y2="${end.y}" stroke="${handColor}" stroke-width="3" stroke-linecap="round" /><circle cx="${cx}" cy="${cy}" r="2.4" fill="${handColor}" /></g>`,
+        `<g class="clock-face"><circle cx="${cx}" cy="${cy}" r="${dialRadius}" fill="${dialColor}" stroke="#334155" stroke-width="1.5" />${renderTicks(cx, cy, sidePrefix, { twelveDown })}${ghostLine}<line x1="${cx}" y1="${cy}" x2="${end.x}" y2="${end.y}" stroke="${handColor}" stroke-width="3" stroke-linecap="round" /><circle cx="${cx}" cy="${cy}" r="2.4" fill="${handColor}" /></g>`,
       );
     }
   }
@@ -726,11 +736,19 @@ function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsF
 }
 
 export function renderClockStateSvg(state, options = {}) {
-  const { ghostState = null, ghostMask = null, displayRightSideUp = state.rightSideUp } = options;
+  const {
+    ghostState = null,
+    ghostMask = null,
+    displayRightSideUp = state.rightSideUp,
+    twelveDown = false,
+    handOffsetTurns = 0,
+  } = options;
   const renderOptions = {
     ghostPosit: ghostState?.posit ?? null,
     ghostMask: ghostMask ?? null,
     displayRightSideUp,
+    twelveDown,
+    handOffsetTurns,
   };
   const left = renderFace(state.posit, 0, 108, "left", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
   const right = renderFace(state.posit, 9, 324, "right", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);

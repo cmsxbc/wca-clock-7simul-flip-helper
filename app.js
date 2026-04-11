@@ -112,6 +112,8 @@ function renderStrictRestoreBlock(scramble) {
         ghostState: previousState,
         ghostMask,
         displayRightSideUp,
+        twelveDown: step.step >= 4,
+        handOffsetTurns: step.step >= 4 ? 6 : 0,
       });
       stepBlock.append(stepText, stepPreview);
       wrapper.append(stepBlock);
