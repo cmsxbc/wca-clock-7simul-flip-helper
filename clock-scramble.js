@@ -345,6 +345,212 @@ export function calculateSevenSimulFlipMemo(scramble) {
   };
 }
 
+const DIAL_INDEX = {
+  UL: 0,
+  U: 1,
+  UR: 2,
+  L: 3,
+  C: 4,
+  R: 5,
+  DL: 6,
+  D: 7,
+  DR: 8,
+};
+
+function frontDialValue(state, dialIndex) {
+  return state.posit[dialIndex];
+}
+
+function frontAffectedIndexes(pinsFront, wheel) {
+  const vector = buildClockWheelMoveVector({ pinsFront, wheel, amount: 1, frontFaceStart: 0 });
+  const affected = [];
+  for (let index = 0; index < 9; index += 1) {
+    if (vector[index] !== 0) {
+      affected.push(index);
+    }
+  }
+  return affected;
+}
+
+function amountToMatchTarget(state, { pinsFront, wheel, sources, target }) {
+  const affected = new Set(frontAffectedIndexes(pinsFront, wheel));
+  const movableSources = sources.filter((source) => affected.has(source));
+  const targetIsAffected = affected.has(target);
+  const targetValue = frontDialValue(state, target);
+
+  if (movableSources.length === 0) {
+    return 0;
+  }
+  if (targetIsAffected) {
+    for (const source of movableSources) {
+      if (frontDialValue(state, source) !== targetValue) {
+        throw new Error("Cannot align when source and target are in same move component");
+      }
+    }
+    return 0;
+  }
+
+  const baseAmount = normalizeClockDelta(targetValue - frontDialValue(state, movableSources[0]));
+  for (const source of movableSources.slice(1)) {
+    const amount = normalizeClockDelta(targetValue - frontDialValue(state, source));
+    if (amount !== baseAmount) {
+      throw new Error("Sources do not share a single alignment amount");
+    }
+  }
+  return baseAmount;
+}
+
+function amountToValue(state, { pinsFront, wheel, sources, targetValue }) {
+  const affected = new Set(frontAffectedIndexes(pinsFront, wheel));
+  const movableSources = sources.filter((source) => affected.has(source));
+  if (movableSources.length === 0) {
+    return 0;
+  }
+  const baseAmount = normalizeClockDelta(targetValue - frontDialValue(state, movableSources[0]));
+  for (const source of movableSources.slice(1)) {
+    const amount = normalizeClockDelta(targetValue - frontDialValue(state, source));
+    if (amount !== baseAmount) {
+      throw new Error("Sources do not share a single target-value amount");
+    }
+  }
+  return baseAmount;
+}
+
+function executeWheel(state, pinsFront, wheel, amount) {
+  return applyClockWheelTurn(
+    { ...state, pinsFront: [...pinsFront] },
+    { pinsFront, wheel, amount, frontFaceStart: 0 },
+  );
+}
+
+function stateInMemoExecutionFrame(scrambleState) {
+  // 7simul flip memo reads the side-up-during-scramble as front.
+  return {
+    posit: [...scrambleState.posit.slice(9, 18), ...scrambleState.posit.slice(0, 9)],
+    rightSideUp: true,
+    pinsFront: [...ALL_PINS_DOWN],
+  };
+}
+
+export function executeSevenSimulFlipRestore(scramble) {
+  const memoValues = calculateSevenSimulFlipMemo(scramble).steps.map((step) => step.value);
+  let state = stateInMemoExecutionFrame(applyClockScramble(scramble));
+
+  const pinsStepA = [true, false, true, true]; // UL DR DL
+  const pinsStepB = [true, false, true, false]; // UL DL
+  const pinsStepC = [true, false, false, false]; // UL
+  const pinsStepFinal = [true, false, false, true]; // UL DR
+
+  // 1) UL/DR/DL up: UL <- step1, UR <- step2
+  state = executeWheel(state, pinsStepA, "UL", memoValues[0]);
+  state = executeWheel(state, pinsStepA, "UR", memoValues[1]);
+  // 2) UL/DL up: UL aligns D to R, UR <- step3
+  state = executeWheel(
+    state,
+    pinsStepB,
+    "UL",
+    amountToMatchTarget(state, {
+      pinsFront: pinsStepB,
+      wheel: "UL",
+      sources: [DIAL_INDEX.D],
+      target: DIAL_INDEX.R,
+    }),
+  );
+  state = executeWheel(state, pinsStepB, "UR", memoValues[2]);
+  // 3) UL up: UL aligns C to D&R, UR aligns DR to D&R
+  state = executeWheel(
+    state,
+    pinsStepC,
+    "UL",
+    amountToMatchTarget(state, {
+      pinsFront: pinsStepC,
+      wheel: "UL",
+      sources: [DIAL_INDEX.C],
+      target: DIAL_INDEX.D,
+    }),
+  );
+  state = executeWheel(
+    state,
+    pinsStepC,
+    "UR",
+    amountToMatchTarget(state, {
+      pinsFront: pinsStepC,
+      wheel: "UR",
+      sources: [DIAL_INDEX.DR],
+      target: DIAL_INDEX.D,
+    }),
+  );
+
+  // 4) x2
+  state = applyClockX2(state);
+
+  // 5) UL/DR/DL up: UL <- step4, UR <- step5
+  state = executeWheel(state, pinsStepA, "UL", memoValues[3]);
+  state = executeWheel(state, pinsStepA, "UR", memoValues[4]);
+  // 6) UL/DL up: UL aligns D to R, UR <- step6
+  state = executeWheel(
+    state,
+    pinsStepB,
+    "UL",
+    amountToMatchTarget(state, {
+      pinsFront: pinsStepB,
+      wheel: "UL",
+      sources: [DIAL_INDEX.D],
+      target: DIAL_INDEX.R,
+    }),
+  );
+  state = executeWheel(state, pinsStepB, "UR", memoValues[5]);
+  // 7) UL up: UL aligns UL/U/L/C to D&R, UR aligns DR to D&R
+  state = executeWheel(
+    state,
+    pinsStepC,
+    "UL",
+    amountToMatchTarget(state, {
+      pinsFront: pinsStepC,
+      wheel: "UL",
+      sources: [DIAL_INDEX.UL, DIAL_INDEX.U, DIAL_INDEX.L, DIAL_INDEX.C],
+      target: DIAL_INDEX.D,
+    }),
+  );
+  state = executeWheel(
+    state,
+    pinsStepC,
+    "UR",
+    amountToMatchTarget(state, {
+      pinsFront: pinsStepC,
+      wheel: "UR",
+      sources: [DIAL_INDEX.DR],
+      target: DIAL_INDEX.D,
+    }),
+  );
+
+  // 8) UL/DR up: UL aligns all except UR/DL to 12, UR aligns UR/DL to 12
+  state = executeWheel(
+    state,
+    pinsStepFinal,
+    "UL",
+    amountToValue(state, {
+      pinsFront: pinsStepFinal,
+      wheel: "UL",
+      sources: [DIAL_INDEX.UL, DIAL_INDEX.U, DIAL_INDEX.L, DIAL_INDEX.C, DIAL_INDEX.R, DIAL_INDEX.D, DIAL_INDEX.DR],
+      targetValue: 0,
+    }),
+  );
+  state = executeWheel(
+    state,
+    pinsStepFinal,
+    "UR",
+    amountToValue(state, {
+      pinsFront: pinsStepFinal,
+      wheel: "UR",
+      sources: [DIAL_INDEX.UR, DIAL_INDEX.DL],
+      targetValue: 0,
+    }),
+  );
+
+  return state;
+}
+
 function handPoint(cx, cy, angleDeg, length) {
   const angle = ((angleDeg - 90) * Math.PI) / 180;
   return {

@@ -9,6 +9,7 @@ import {
   applyClockScramble,
   buildClockWheelMoveVector,
   calculateSevenSimulFlipMemo,
+  executeSevenSimulFlipRestore,
   generateClockScramble,
   parseClockScramble,
   renderClockStateSvg,
@@ -173,4 +174,21 @@ test("x2 flips sides with 180-degree face rotation", () => {
   assert.deepEqual(once.pinsFront, [false, false, false, false]);
   assert.deepEqual(twice.posit, base.posit);
   assert.equal(twice.rightSideUp, true);
+});
+
+test("strict 7simul flip execution restores published example", () => {
+  const scramble = "UR3- DR4- DL1- UL2- U1+ R4+ D2- L3- ALL1+ y2 U3- R1- D4- L4+ ALL1+ DR DL UL";
+  const restored = executeSevenSimulFlipRestore(scramble);
+
+  assert.deepEqual(restored.posit, new Array(18).fill(0));
+  assert.equal(restored.rightSideUp, false);
+  assert.deepEqual(restored.pinsFront, [true, false, false, true]);
+});
+
+test("strict 7simul flip execution forms closed loop on random scrambles", () => {
+  for (let i = 0; i < 20; i += 1) {
+    const scramble = generateClockScramble();
+    const restored = executeSevenSimulFlipRestore(scramble);
+    assert.deepEqual(restored.posit, new Array(18).fill(0), scramble);
+  }
 });
