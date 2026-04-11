@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WCA 魔表打乱生成器</title>
+    <title>Clock 7simul Flip 学习助手</title>
     <style>
       :root {
         color-scheme: light dark;
@@ -229,26 +229,38 @@
   </head>
   <body>
     <main class="container">
-      <h1>WCA 魔表（Clock）打乱展示</h1>
-      <p>参考 tnoodle 官方逻辑生成格式：前 9 步 + <code>y2</code> + 后 5 步。</p>
+      <h1>Clock 7simul Flip 学习助手</h1>
+      <p>用于生成打乱、查看记忆编码与模拟执行步骤，辅助你练习和核对 7simul flip。</p>
 
       <section class="panel">
         <form id="custom-form">
-          <label for="custom-scramble">输入一条 Clock 打乱并渲染：</label>
+          <label for="custom-scramble">输入一条 Clock 打乱进行学习模式渲染：</label>
           <textarea
             id="custom-scramble"
             name="custom-scramble"
             placeholder="例如：UR1- DR2+ DL0+ UL5- U3+ R2- D1+ L0+ ALL4- y2 U1+ R4- D2+ L3- ALL0+"
           ></textarea>
           <div class="inline">
-            <button type="submit">渲染输入打乱</button>
+            <button type="submit">渲染此打乱</button>
             <label class="inline" for="reset-pins">
               <input id="reset-pins" type="checkbox" checked />
-              结束时将 pins 全部按下（WCA 常用展示）
+              结束时将 pins 全部按下（常见展示方式）
             </label>
             <label class="inline" for="show-strict-restore">
               <input id="show-strict-restore" type="checkbox" />
-              显示 7simul 逐步执行
+              显示 7simul flip 执行过程
+            </label>
+            <label class="inline" for="show-memo-derivation">
+              <input id="show-memo-derivation" type="checkbox" />
+              显示记忆编码推导
+            </label>
+            <label class="inline" for="show-strict-details">
+              <input id="show-strict-details" type="checkbox" checked />
+              显示每一步状态图
+            </label>
+            <label class="inline" for="show-ghost-hands">
+              <input id="show-ghost-hands" type="checkbox" />
+              显示橙色虚线（上一步指针）
             </label>
           </div>
         </form>
@@ -257,7 +269,7 @@
       <form id="scramble-form">
         <label for="count">生成条数：</label>
         <input id="count" name="count" type="number" min="1" max="200" value="1" />
-        <button type="submit">生成打乱</button>
+        <button type="submit">生成练习打乱</button>
         <button id="copy-all" type="button" class="secondary" disabled>复制全部</button>
       </form>
 
@@ -265,7 +277,7 @@
       <ol id="output-list" class="list"></ol>
 
       <p class="meta">
-        说明：此页面用于学习和展示 Clock 打乱格式；正式比赛请始终使用 WCA 官方打乱程序。
+        说明：本工具仅用于 7simul flip 学习与自检；正式比赛请以 WCA 官方打乱程序为准。
       </p>
     </main>
 

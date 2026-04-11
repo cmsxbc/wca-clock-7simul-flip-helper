@@ -15,6 +15,43 @@ const customForm = document.querySelector("#custom-form");
 const customInput = document.querySelector("#custom-scramble");
 const resetPinsCheckbox = document.querySelector("#reset-pins");
 const showStrictRestoreCheckbox = document.querySelector("#show-strict-restore");
+const showMemoDerivationCheckbox = document.querySelector("#show-memo-derivation");
+const showGhostHandsCheckbox = document.querySelector("#show-ghost-hands");
+const showStrictDetailsCheckbox = document.querySelector("#show-strict-details");
+
+const UI_PREF_KEYS = {
+  showStrictRestore: "clock.ui.showStrictRestore",
+  showMemoDerivation: "clock.ui.showMemoDerivation",
+  showStrictDetails: "clock.ui.showStrictDetails",
+  showGhostHands: "clock.ui.showGhostHands",
+};
+
+function readCheckboxPreference(key, fallback) {
+  const stored = localStorage.getItem(key);
+  if (stored === "true") {
+    return true;
+  }
+  if (stored === "false") {
+    return false;
+  }
+  return fallback;
+}
+
+function saveCheckboxPreference(key, value) {
+  localStorage.setItem(key, String(value));
+}
+
+function applyOptionDependencies() {
+  const strictEnabled = showStrictRestoreCheckbox.checked;
+  showStrictDetailsCheckbox.disabled = !strictEnabled;
+  showGhostHandsCheckbox.disabled = !strictEnabled || !showStrictDetailsCheckbox.checked;
+}
+
+function formatWheelTurns(step) {
+  return step.wheelTurns.length === 0
+    ? "x2"
+    : step.wheelTurns.map((turn) => `${turn.wheel}${Math.abs(turn.amount)}${turn.amount >= 0 ? "+" : "-"}`).join("，");
+}
 
 function formatTerm(term) {
   const prefix = `${term.from}(${term.fromValue})→${term.to}(${term.toValue})`;
@@ -24,18 +61,17 @@ function formatTerm(term) {
 
 function renderMemoBlock(scramble) {
   const memo = calculateSevenSimulFlipMemo(scramble);
+  const showMemoDerivation = showMemoDerivationCheckbox.checked;
   const wrapper = document.createElement("section");
   wrapper.className = "memo-block";
 
   const summary = document.createElement("p");
   summary.className = "memo-summary";
   summary.textContent = `7simul flip 记忆：${memo.summary}`;
-
-  const details = document.createElement("details");
-  details.className = "memo-details";
-  const detailsSummary = document.createElement("summary");
-  detailsSummary.textContent = "展开来源计算";
-  details.appendChild(detailsSummary);
+  wrapper.append(summary);
+  if (!showMemoDerivation) {
+    return wrapper;
+  }
 
   const tableWrap = document.createElement("div");
   tableWrap.className = "memo-table-wrap";
@@ -58,9 +94,8 @@ function renderMemoBlock(scramble) {
   }
   table.appendChild(tbody);
   tableWrap.appendChild(table);
-  details.appendChild(tableWrap);
 
-  wrapper.append(summary, details);
+  wrapper.append(tableWrap);
   return wrapper;
 }
 
@@ -75,13 +110,37 @@ function renderStrictRestoreBlock(scramble) {
     const restored = executeSevenSimulFlipRestoreWithTrace(scramble);
     const finalState = restored.state;
     const solved = finalState.posit.every((value) => value === 0);
+    const showStrictDetails = showStrictDetailsCheckbox.checked;
+    const showGhostHands = showStrictDetails && showGhostHandsCheckbox.checked;
     title.textContent = solved ? "7simul 逐步执行（闭环成功）" : "7simul 逐步执行（闭环失败）";
 
     wrapper.append(title);
     const legend = document.createElement("p");
     legend.className = "status";
-    legend.textContent = "橙色虚线指针表示本步操作前的位置（仅标出发生变化的表盘）。";
+    legend.textContent = showStrictDetails
+      ? showGhostHands
+        ? "橙色虚线指针表示本步操作前的位置（仅标出发生变化的表盘）。"
+        : "当前仅显示本步操作后的实线指针。"
+      : "当前仅显示步骤操作表。";
     wrapper.append(legend);
+
+    if (!showStrictDetails) {
+      const tableWrap = document.createElement("div");
+      tableWrap.className = "memo-table-wrap";
+      const table = document.createElement("table");
+      table.className = "memo-table";
+      table.innerHTML = "<thead><tr><th>步骤</th><th>说明</th><th>操作</th></tr></thead>";
+      const tbody = document.createElement("tbody");
+      for (const step of restored.trace) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${step.step}</td><td>${step.description}</td><td>${formatWheelTurns(step)}</td>`;
+        tbody.appendChild(row);
+      }
+      table.appendChild(tbody);
+      tableWrap.appendChild(table);
+      wrapper.append(tableWrap);
+      return wrapper;
+    }
 
     let previousState = restored.initialState;
     for (const step of restored.trace) {
@@ -90,12 +149,7 @@ function renderStrictRestoreBlock(scramble) {
 
       const stepText = document.createElement("p");
       stepText.className = "strict-step-title";
-      const wheels =
-        step.wheelTurns.length === 0
-          ? "x2"
-          : step.wheelTurns
-              .map((turn) => `${turn.wheel}${Math.abs(turn.amount)}${turn.amount >= 0 ? "+" : "-"}`)
-              .join("，");
+      const wheels = formatWheelTurns(step);
       stepText.textContent = `${step.step}. ${step.description}（${wheels}）`;
 
       const ghostMask =
@@ -109,8 +163,8 @@ function renderStrictRestoreBlock(scramble) {
       const stepPreview = document.createElement("div");
       stepPreview.className = "scramble-preview";
       stepPreview.innerHTML = renderClockStateSvg(step.state, {
-        ghostState: previousState,
-        ghostMask,
+        ghostState: showGhostHands ? previousState : null,
+        ghostMask: showGhostHands ? ghostMask : null,
         displayRightSideUp,
         twelveDown: step.step >= 4,
         handOffsetTurns: step.step >= 4 ? 6 : 0,
@@ -211,10 +265,43 @@ resetPinsCheckbox.addEventListener("change", () => {
 });
 
 showStrictRestoreCheckbox.addEventListener("change", () => {
+  saveCheckboxPreference(UI_PREF_KEYS.showStrictRestore, showStrictRestoreCheckbox.checked);
+  applyOptionDependencies();
   const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
   if (current.length > 0) {
     renderScrambles(current);
   }
 });
+
+showMemoDerivationCheckbox.addEventListener("change", () => {
+  saveCheckboxPreference(UI_PREF_KEYS.showMemoDerivation, showMemoDerivationCheckbox.checked);
+  const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  if (current.length > 0) {
+    renderScrambles(current);
+  }
+});
+
+showGhostHandsCheckbox.addEventListener("change", () => {
+  saveCheckboxPreference(UI_PREF_KEYS.showGhostHands, showGhostHandsCheckbox.checked);
+  const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  if (current.length > 0) {
+    renderScrambles(current);
+  }
+});
+
+showStrictDetailsCheckbox.addEventListener("change", () => {
+  saveCheckboxPreference(UI_PREF_KEYS.showStrictDetails, showStrictDetailsCheckbox.checked);
+  applyOptionDependencies();
+  const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  if (current.length > 0) {
+    renderScrambles(current);
+  }
+});
+
+showStrictRestoreCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showStrictRestore, false);
+showMemoDerivationCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showMemoDerivation, false);
+showStrictDetailsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showStrictDetails, true);
+showGhostHandsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showGhostHands, false);
+applyOptionDependencies();
 
 renderScrambles(generateClockScrambles(getCountValue()));
