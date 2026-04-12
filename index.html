@@ -1044,77 +1044,88 @@
     <div id="settings-overlay" class="settings-overlay">
       <aside class="settings-panel">
         <div class="settings-header">
-          <h2>设置</h2>
+          <h2 data-i18n="settings.title">设置</h2>
           <button id="settings-close" class="settings-close" type="button">✕</button>
         </div>
 
         <div class="settings-section">
-          <p class="settings-section-title">外观</p>
+          <p class="settings-section-title" data-i18n="settings.language">语言</p>
           <div class="settings-item">
-            <label for="theme-select">主题模式：</label>
-            <select id="theme-select">
-              <option value="dark">夜间（深色）</option>
-              <option value="light">日间（浅色）</option>
-              <option value="system">跟随系统</option>
+            <label for="lang-select" data-i18n="settings.language.label">界面语言：</label>
+            <select id="lang-select">
+              <option value="zh-CN">中文</option>
+              <option value="en">English</option>
             </select>
           </div>
         </div>
 
         <div class="settings-section">
-          <p class="settings-section-title">Clock 配色</p>
-          <p class="color-group-label">正面（深色面）</p>
-          <div class="color-grid">
-            <label class="color-item"><input type="color" id="color-front-face" /> 大表盘</label>
-            <label class="color-item"><input type="color" id="color-front-dial" /> 小表盘</label>
-            <label class="color-item"><input type="color" id="color-front-hand" /> 指针</label>
-            <label class="color-item"><input type="color" id="color-front-pin-up" /> Pin ↑</label>
-            <label class="color-item"><input type="color" id="color-front-pin-down" /> Pin ↓</label>
-          </div>
-          <p class="color-group-label">背面（浅色面）</p>
-          <div class="color-grid">
-            <label class="color-item"><input type="color" id="color-back-face" /> 大表盘</label>
-            <label class="color-item"><input type="color" id="color-back-dial" /> 小表盘</label>
-            <label class="color-item"><input type="color" id="color-back-hand" /> 指针</label>
-            <label class="color-item"><input type="color" id="color-back-pin-up" /> Pin ↑</label>
-            <label class="color-item"><input type="color" id="color-back-pin-down" /> Pin ↓</label>
-          </div>
-          <div class="color-reset-row">
-            <button id="reset-clock-colors" class="secondary" type="button">恢复默认配色</button>
+          <p class="settings-section-title" data-i18n="settings.appearance">外观</p>
+          <div class="settings-item">
+            <label for="theme-select" data-i18n="settings.theme.label">主题模式：</label>
+            <select id="theme-select">
+              <option value="dark" data-i18n="settings.theme.dark">夜间（深色）</option>
+              <option value="light" data-i18n="settings.theme.light">日间（浅色）</option>
+              <option value="system" data-i18n="settings.theme.system">跟随系统</option>
+            </select>
           </div>
         </div>
 
         <div class="settings-section">
-          <p class="settings-section-title">学习模式</p>
+          <p class="settings-section-title" data-i18n="settings.clockColors">Clock 配色</p>
+          <p class="color-group-label" data-i18n="settings.clockColors.front">正面（深色面）</p>
+          <div class="color-grid">
+            <label class="color-item"><input type="color" id="color-front-face" /> <span data-i18n="settings.clockColors.face">大表盘</span></label>
+            <label class="color-item"><input type="color" id="color-front-dial" /> <span data-i18n="settings.clockColors.dial">小表盘</span></label>
+            <label class="color-item"><input type="color" id="color-front-hand" /> <span data-i18n="settings.clockColors.hand">指针</span></label>
+            <label class="color-item"><input type="color" id="color-front-pin-up" /> <span data-i18n="settings.clockColors.pinUp">Pin ↑</span></label>
+            <label class="color-item"><input type="color" id="color-front-pin-down" /> <span data-i18n="settings.clockColors.pinDown">Pin ↓</span></label>
+          </div>
+          <p class="color-group-label" data-i18n="settings.clockColors.back">背面（浅色面）</p>
+          <div class="color-grid">
+            <label class="color-item"><input type="color" id="color-back-face" /> <span data-i18n="settings.clockColors.face">大表盘</span></label>
+            <label class="color-item"><input type="color" id="color-back-dial" /> <span data-i18n="settings.clockColors.dial">小表盘</span></label>
+            <label class="color-item"><input type="color" id="color-back-hand" /> <span data-i18n="settings.clockColors.hand">指针</span></label>
+            <label class="color-item"><input type="color" id="color-back-pin-up" /> <span data-i18n="settings.clockColors.pinUp">Pin ↑</span></label>
+            <label class="color-item"><input type="color" id="color-back-pin-down" /> <span data-i18n="settings.clockColors.pinDown">Pin ↓</span></label>
+          </div>
+          <div class="color-reset-row">
+            <button id="reset-clock-colors" class="secondary" type="button" data-i18n="settings.clockColors.reset">恢复默认配色</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <p class="settings-section-title" data-i18n="settings.learn">学习模式</p>
           <label class="settings-item" for="reset-pins">
             <input id="reset-pins" type="checkbox" checked />
-            结束时将 pins 全部按下
+            <span data-i18n="settings.learn.resetPins">结束时将 pins 全部按下</span>
           </label>
           <label class="settings-item" for="show-strict-restore">
             <input id="show-strict-restore" type="checkbox" />
-            显示 7simul flip 执行过程
+            <span data-i18n="settings.learn.showStrictRestore">显示 7simul flip 执行过程</span>
           </label>
           <label class="settings-item" for="show-memo-derivation">
             <input id="show-memo-derivation" type="checkbox" />
-            显示记忆编码推导
+            <span data-i18n="settings.learn.showMemoDerivation">显示记忆编码推导</span>
           </label>
           <label class="settings-item" for="show-strict-details">
             <input id="show-strict-details" type="checkbox" checked />
-            显示每一步状态图
+            <span data-i18n="settings.learn.showStrictDetails">显示每一步状态图</span>
           </label>
           <label class="settings-item" for="show-ghost-hands">
             <input id="show-ghost-hands" type="checkbox" />
-            显示橙色虚线（上一步指针）
+            <span data-i18n="settings.learn.showGhostHands">显示橙色虚线（上一步指针）</span>
           </label>
         </div>
 
         <div class="settings-section">
-          <p class="settings-section-title">记忆练习</p>
+          <p class="settings-section-title" data-i18n="settings.trainer">记忆练习</p>
           <label class="settings-item" for="show-scramble-preview">
             <input id="show-scramble-preview" type="checkbox" />
-            显示打乱后状态
+            <span data-i18n="settings.trainer.showPreview">显示打乱后状态</span>
           </label>
           <div class="settings-item">
-            <label for="confirm-key-select">确认键：</label>
+            <label for="confirm-key-select" data-i18n="settings.trainer.confirmKey">确认键：</label>
             <select id="confirm-key-select">
               <option value="Enter">Enter</option>
               <option value="Space">Space</option>
@@ -1126,31 +1137,32 @@
 
     <main class="container">
       <div class="header-row">
-        <h1>Clock 7simul Flip 学习助手</h1>
-        <button id="settings-btn" class="settings-btn" type="button" title="设置"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/><line x1="15" y1="12" x2="20" y2="12"/><line x1="4" y1="12" x2="9" y2="12"/><line x1="15" y1="5" x2="20" y2="5"/><line x1="4" y1="5" x2="9" y2="5"/><line x1="15" y1="19" x2="20" y2="19"/><line x1="4" y1="19" x2="9" y2="19"/></svg></button>
+        <h1 data-i18n="page.h1">Clock 7simul Flip 学习助手</h1>
+        <button id="settings-btn" class="settings-btn" type="button" data-i18n-title="settings.btn.title" title="设置"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/><line x1="15" y1="12" x2="20" y2="12"/><line x1="4" y1="12" x2="9" y2="12"/><line x1="15" y1="5" x2="20" y2="5"/><line x1="4" y1="5" x2="9" y2="5"/><line x1="15" y1="19" x2="20" y2="19"/><line x1="4" y1="19" x2="9" y2="19"/></svg></button>
       </div>
 
       <nav class="tab-bar">
-        <button class="tab-btn" data-mode="trainer">记忆练习</button>
-        <button class="tab-btn active" data-mode="learn">学习模式</button>
-        <button class="tab-btn" data-mode="generator">打乱生成</button>
+        <button class="tab-btn" data-mode="trainer" data-i18n="tab.trainer">记忆练习</button>
+        <button class="tab-btn active" data-mode="learn" data-i18n="tab.learn">学习模式</button>
+        <button class="tab-btn" data-mode="generator" data-i18n="tab.generator">打乱生成</button>
       </nav>
 
       <div id="mode-learn" class="mode-container visible">
 
       <details id="custom-panel" class="panel collapsible-panel">
         <summary class="panel-toggle">
-          输入自定义打乱
-          <button id="learn-generate" type="button" style="margin-left:auto;" title="生成练习打乱（快捷键 →）">生成打乱 <kbd>→</kbd></button>
+          <span data-i18n="learn.customPanel">输入自定义打乱</span>
+          <button id="learn-generate" type="button" style="margin-left:auto;" data-i18n-title="learn.generate.title" title="生成练习打乱（快捷键 →）"><span data-i18n="learn.generate">生成打乱</span> <kbd>→</kbd></button>
         </summary>
         <form id="custom-form" class="custom-form-inner">
           <textarea
             id="custom-scramble"
             name="custom-scramble"
+            data-i18n-placeholder="learn.placeholder"
             placeholder="例如：UR1- DR2+ DL0+ UL5- U3+ R2- D1+ L0+ ALL4- y2 U1+ R4- D2+ L3- ALL0+"
           ></textarea>
           <div class="inline">
-            <button type="submit">渲染此打乱</button>
+            <button type="submit" data-i18n="learn.submit">渲染此打乱</button>
           </div>
         </form>
       </details>
@@ -1162,8 +1174,8 @@
 
         <details id="history-panel" class="panel collapsible-panel learn-aside">
           <summary class="panel-toggle">
-            历史记录
-            <button id="clear-history" class="btn-danger" type="button" style="margin-left:auto;">清空历史</button>
+            <span data-i18n="learn.history">历史记录</span>
+            <button id="clear-history" class="btn-danger" type="button" style="margin-left:auto;" data-i18n="learn.clearHistory">清空历史</button>
           </summary>
           <ul id="history-list" class="history-list"></ul>
         </details>
@@ -1173,10 +1185,10 @@
 
       <div id="mode-generator" class="mode-container">
         <form id="gen-form">
-          <label for="gen-count">生成条数：</label>
+          <label for="gen-count" data-i18n="gen.countLabel">生成条数：</label>
           <input id="gen-count" name="gen-count" type="number" min="1" max="200" value="5" />
-          <button type="submit">生成</button>
-          <button id="gen-copy-all" type="button" class="secondary icon-btn" disabled title="复制全部"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          <button type="submit" data-i18n="gen.submit">生成</button>
+          <button id="gen-copy-all" type="button" class="secondary icon-btn" disabled data-i18n-title="gen.copy.title" title="复制全部"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </form>
         <div id="gen-status" class="status"></div>
         <ol id="gen-output-list" class="list"></ol>
@@ -1191,7 +1203,7 @@
             <div id="trainer-preview" class="trainer-preview"></div>
             <div id="trainer-touch-zone" class="trainer-touch-zone">
               <div id="trainer-timer" class="trainer-timer color-idle">0.000</div>
-              <div id="trainer-hint" class="trainer-hint">长按空格或触屏 1 秒准备计时</div>
+              <div id="trainer-hint" class="trainer-hint" data-i18n="trainer.hint.idle">长按空格或触屏 1 秒准备计时</div>
             </div>
             <div id="trainer-result" class="trainer-result"></div>
 
@@ -1202,6 +1214,7 @@
                 type="text"
                 autocomplete="off"
                 inputmode="none"
+                data-i18n-placeholder="trainer.input.placeholder"
                 placeholder="输入记忆码"
               />
               <div id="virtual-keypad" class="virtual-keypad">
@@ -1222,7 +1235,7 @@
                   <button type="button" class="keypad-key keypad-del" data-key="DEL">DEL</button>
                 </div>
                 <div class="keypad-row keypad-row-submit">
-                  <button type="button" id="keypad-submit" class="keypad-key keypad-submit">提交</button>
+                  <button type="button" id="keypad-submit" class="keypad-key keypad-submit" data-i18n="trainer.keypad.submit">提交</button>
                 </div>
               </div>
             </div>
@@ -1232,8 +1245,8 @@
             <div id="trainer-stats" class="trainer-stats"></div>
 
             <div class="trainer-results-header">
-              <h3>成绩记录</h3>
-              <button id="clear-results" class="btn-danger" type="button">清空全部</button>
+              <h3 data-i18n="trainer.results.title">成绩记录</h3>
+              <button id="clear-results" class="btn-danger" type="button" data-i18n="trainer.results.clear">清空全部</button>
             </div>
 
             <ul id="trainer-results-list" class="trainer-results-list"></ul>
@@ -1244,7 +1257,7 @@
 
     </main>
 
-    <button id="back-to-top" class="back-to-top" type="button" title="回到顶部">
+    <button id="back-to-top" class="back-to-top" type="button" data-i18n-title="backToTop.title" title="回到顶部">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
     </button>
 

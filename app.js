@@ -21,6 +21,14 @@ import {
   formatTime,
 } from "./memo-trainer.js";
 
+import {
+  t,
+  loadLanguage,
+  setLanguage,
+  getLanguage,
+  applyTranslations,
+} from "./i18n.js";
+
 // ─── Back to top ───
 
 const backToTopBtn = document.querySelector("#back-to-top");
@@ -87,6 +95,31 @@ systemDarkQuery.addEventListener("change", () => {
     applyTheme("system");
   }
 });
+
+// ─── Language management ───
+
+loadLanguage();
+applyTranslations();
+
+const langSelect = document.querySelector("#lang-select");
+langSelect.value = getLanguage();
+
+langSelect.addEventListener("change", () => {
+  setLanguage(langSelect.value);
+  refreshAllDynamicText();
+});
+
+function refreshAllDynamicText() {
+  const learnScrambles = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  if (learnScrambles.length > 0) {
+    renderScrambles(learnScrambles);
+  }
+  if (trainerActive) {
+    renderStats();
+    renderResultsList();
+    handleTimerStateChange(timer.getState());
+  }
+}
 
 // ─── Clock color management ───
 
@@ -203,7 +236,7 @@ function applyOptionDependencies() {
 function formatWheelTurns(step) {
   return step.wheelTurns.length === 0
     ? "x2"
-    : step.wheelTurns.map((turn) => `${turn.wheel}${Math.abs(turn.amount)}${turn.amount >= 0 ? "+" : "-"}`).join("，");
+    : step.wheelTurns.map((turn) => `${turn.wheel}${Math.abs(turn.amount)}${turn.amount >= 0 ? "+" : "-"}`).join(t("separator"));
 }
 
 function formatTerm(term) {
@@ -220,7 +253,7 @@ function renderMemoBlock(scramble) {
 
   const summary = document.createElement("p");
   summary.className = "memo-summary";
-  summary.textContent = `7simul flip 记忆：${memo.summary}`;
+  summary.textContent = `${t("memo.title")}${memo.summary}`;
   wrapper.append(summary);
   if (!showMemoDerivation) {
     return wrapper;
@@ -233,13 +266,13 @@ function renderMemoBlock(scramble) {
 
   const thead = document.createElement("thead");
   thead.innerHTML =
-    "<tr><th>步骤</th><th>公式</th><th>分项差值</th><th>合计(归一化)</th><th>编码</th></tr>";
+    `<tr><th>${t("memo.table.step")}</th><th>${t("memo.table.formula")}</th><th>${t("memo.table.terms")}</th><th>${t("memo.table.total")}</th><th>${t("memo.table.code")}</th></tr>`;
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
   for (const step of memo.steps) {
     const row = document.createElement("tr");
-    const terms = step.terms.map(formatTerm).join("，");
+    const terms = step.terms.map(formatTerm).join(t("separator"));
     const normalized = step.value >= 0 ? `+${step.value}` : `${step.value}`;
     const rawPart = step.rawSum === step.value ? `${normalized}` : `${step.rawSum} -> ${normalized}`;
     row.innerHTML = `<td>${step.id}</td><td>${step.description}</td><td>${terms}</td><td>${rawPart}</td><td>${step.encoded}</td>`;
@@ -265,16 +298,16 @@ function renderStrictRestoreBlock(scramble) {
     const solved = finalState.posit.every((value) => value === 0);
     const showStrictDetails = showStrictDetailsCheckbox.checked;
     const showGhostHands = showStrictDetails && showGhostHandsCheckbox.checked;
-    title.textContent = solved ? "7simul 逐步执行（闭环成功）" : "7simul 逐步执行（闭环失败）";
+    title.textContent = solved ? t("strict.success") : t("strict.fail");
 
     wrapper.append(title);
     const legend = document.createElement("p");
     legend.className = "status";
     legend.textContent = showStrictDetails
       ? showGhostHands
-        ? "橙色虚线指针表示本步操作前的位置（仅标出发生变化的表盘）。"
-        : "当前仅显示本步操作后的实线指针。"
-      : "当前仅显示步骤操作表。";
+        ? t("strict.legend.ghost")
+        : t("strict.legend.solid")
+      : t("strict.legend.table");
     wrapper.append(legend);
 
     if (!showStrictDetails) {
@@ -282,11 +315,11 @@ function renderStrictRestoreBlock(scramble) {
       tableWrap.className = "memo-table-wrap";
       const table = document.createElement("table");
       table.className = "memo-table";
-      table.innerHTML = "<thead><tr><th>步骤</th><th>说明</th><th>操作</th></tr></thead>";
+      table.innerHTML = `<thead><tr><th>${t("strict.table.step")}</th><th>${t("strict.table.desc")}</th><th>${t("strict.table.ops")}</th></tr></thead>`;
       const tbody = document.createElement("tbody");
       for (const step of restored.trace) {
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${step.step}</td><td>${step.description}</td><td>${formatWheelTurns(step)}</td>`;
+        row.innerHTML = `<td>${step.step}</td><td>${t(`trace.step${step.step}`)}</td><td>${formatWheelTurns(step)}</td>`;
         tbody.appendChild(row);
       }
       table.appendChild(tbody);
@@ -303,7 +336,7 @@ function renderStrictRestoreBlock(scramble) {
       const stepText = document.createElement("p");
       stepText.className = "strict-step-title";
       const wheels = formatWheelTurns(step);
-      stepText.textContent = `${step.step}. ${step.description}（${wheels}）`;
+      stepText.textContent = `${step.step}. ${t(`trace.step${step.step}`)}（${wheels}）`;
 
       const ghostMask =
         previousState && previousState.rightSideUp === step.state.rightSideUp
@@ -328,7 +361,7 @@ function renderStrictRestoreBlock(scramble) {
       previousState = step.state;
     }
   } catch (error) {
-    title.textContent = `严格 7simul flip 执行失败：${error.message}`;
+    title.textContent = `${t("strict.error")}${error.message}`;
     wrapper.append(title);
   }
 
@@ -429,7 +462,7 @@ function renderHistory() {
     li.append(dateSpan, scrambleSpan);
     li.addEventListener("click", () => {
       renderScrambles([entry.scramble]);
-      statusText.textContent = "已从历史记录加载打乱。";
+      statusText.textContent = t("learn.status.loaded");
     });
     historyList.appendChild(li);
   }
@@ -437,7 +470,7 @@ function renderHistory() {
 
 clearHistoryBtn.addEventListener("click", (e) => {
   e.stopPropagation();
-  if (!confirm("确定要清空全部历史记录吗？")) return;
+  if (!confirm(t("learn.confirm.clearHistory"))) return;
   localStorage.removeItem(HISTORY_KEY);
   renderHistory();
 });
@@ -458,7 +491,7 @@ customForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const raw = customInput.value.trim();
   if (!raw) {
-    statusText.textContent = "请输入一条 Clock 打乱。";
+    statusText.textContent = t("learn.status.empty");
     return;
   }
 
@@ -466,9 +499,9 @@ customForm.addEventListener("submit", (event) => {
     renderScrambles([raw]);
     pushHistory([raw]);
     renderHistory();
-    statusText.textContent = "已渲染你输入的打乱。";
+    statusText.textContent = t("learn.status.rendered");
   } catch (error) {
-    statusText.textContent = `打乱格式有误：${error.message}`;
+    statusText.textContent = `${t("learn.status.error")}${error.message}`;
   }
 });
 
@@ -605,13 +638,13 @@ function renderGenScrambles(scrambles) {
     const memoEl = document.createElement("p");
     memoEl.className = "memo-summary";
     memoEl.style.marginTop = "4px";
-    memoEl.textContent = `记忆：${memo.summary}`;
+    memoEl.textContent = `${t("gen.memoPrefix")}${memo.summary}`;
 
     item.append(text, memoEl);
     genOutputList.appendChild(item);
   }
   genCopyBtn.disabled = scrambles.length === 0;
-  genStatusText.textContent = `已生成 ${scrambles.length} 条魔表打乱。`;
+  genStatusText.textContent = t("gen.status", { count: scrambles.length });
 }
 
 genForm.addEventListener("submit", (e) => {
@@ -627,9 +660,9 @@ genCopyBtn.addEventListener("click", async () => {
   const payload = lines.join("\n");
   try {
     await navigator.clipboard.writeText(payload);
-    genStatusText.textContent = "已复制所有打乱到剪贴板。";
+    genStatusText.textContent = t("gen.copied");
   } catch {
-    genStatusText.textContent = "复制失败，请手动选择文本复制。";
+    genStatusText.textContent = t("gen.copyFail");
   }
 });
 
@@ -702,7 +735,7 @@ function renderStats() {
     { label: "Ao5", value: formatTime(stats.ao5) },
     { label: "Ao12", value: formatTime(stats.ao12) },
     { label: "Mean", value: formatTime(stats.mean) },
-    { label: "次数", value: `${stats.valid}/${stats.total}` },
+    { label: t("trainer.stats.count"), value: `${stats.valid}/${stats.total}` },
   ];
   trainerStatsEl.innerHTML = items
     .map(
@@ -744,7 +777,7 @@ function renderResultsList() {
 
     const detail = document.createElement("div");
     detail.className = "result-detail";
-    detail.innerHTML = `<p>打乱：${r.scramble}</p><p>正确：${r.expected}</p><p>输入：${r.input || "(空)"}</p>`;
+    detail.innerHTML = `<p>${t("trainer.result.scramble")}${r.scramble}</p><p>${t("trainer.result.expected")}${r.expected}</p><p>${t("trainer.result.input")}${r.input || t("trainer.result.empty")}</p>`;
 
     row.addEventListener("click", () => {
       detail.classList.toggle("visible");
@@ -760,7 +793,7 @@ function handleTimerStateChange(state) {
     case TimerState.IDLE:
       setTimerColor("color-idle");
       trainerTimerEl.textContent = "0.000";
-      trainerHintEl.textContent = "长按空格或触屏 1 秒准备计时";
+      trainerHintEl.textContent = t("trainer.hint.idle");
       trainerInputArea.classList.remove("visible");
       trainerResultEl.textContent = "";
       trainerInput.value = "";
@@ -768,19 +801,19 @@ function handleTimerStateChange(state) {
       break;
     case TimerState.HOLDING:
       setTimerColor("color-holding");
-      trainerHintEl.textContent = "继续按住...";
+      trainerHintEl.textContent = t("trainer.hint.holding");
       trainerTouchZone.classList.add("zone-holding");
       trainerTouchZone.classList.remove("zone-ready");
       break;
     case TimerState.READY:
       setTimerColor("color-ready");
-      trainerHintEl.textContent = "松开开始！";
+      trainerHintEl.textContent = t("trainer.hint.ready");
       trainerTouchZone.classList.remove("zone-holding");
       trainerTouchZone.classList.add("zone-ready");
       break;
     case TimerState.RUNNING:
       setTimerColor("color-running");
-      trainerHintEl.textContent = "输入记忆码后按 " + (confirmKey === "Space" ? "空格" : "回车") + " 提交";
+      trainerHintEl.textContent = confirmKey === "Space" ? t("trainer.hint.submit.space") : t("trainer.hint.submit.enter");
       trainerInputArea.classList.add("visible");
       trainerInput.value = "";
       trainerInput.focus();
@@ -800,15 +833,15 @@ function finishRound() {
 
   if (valid) {
     setTimerColor("color-valid");
-    trainerResultEl.textContent = `✓ 正确！`;
+    trainerResultEl.textContent = t("trainer.result.correct");
     trainerResultEl.style.color = "#4ade80";
   } else {
     setTimerColor("color-dnf");
-    trainerResultEl.textContent = `✗ 错误 — 正确答案：${currentExpected}`;
+    trainerResultEl.textContent = `${t("trainer.result.wrong")}${currentExpected}`;
     trainerResultEl.style.color = "#f87171";
   }
 
-  trainerHintEl.textContent = "按空格或触屏开始下一轮";
+  trainerHintEl.textContent = t("trainer.hint.next");
   trainerInputArea.classList.remove("visible");
 
   const record = {
@@ -998,7 +1031,7 @@ function teardownTrainer() {
 }
 
 clearResultsBtn.addEventListener("click", () => {
-  if (!confirm("确定要清空全部成绩记录吗？")) return;
+  if (!confirm(t("trainer.confirm.clear"))) return;
   clearResults();
   renderStats();
   renderResultsList();
