@@ -1,6 +1,7 @@
 import {
   applyClockScramble,
   calculateSevenSimulFlipMemo,
+  DEFAULT_CLOCK_COLORS,
   executeSevenSimulFlipRestoreWithTrace,
   generateClockScramble,
   generateClockScrambles,
@@ -51,6 +52,112 @@ settingsOverlay.addEventListener("click", (e) => {
     settingsOverlay.classList.remove("open");
   }
 });
+
+// ─── Theme management ───
+
+const THEME_KEY = "clock.ui.theme";
+const themeSelect = document.querySelector("#theme-select");
+const systemDarkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+function getResolvedTheme(pref) {
+  if (pref === "system") {
+    return systemDarkQuery.matches ? "dark" : "light";
+  }
+  return pref;
+}
+
+function applyTheme(pref) {
+  document.documentElement.setAttribute("data-theme", getResolvedTheme(pref));
+}
+
+function loadTheme() {
+  return localStorage.getItem(THEME_KEY) || "dark";
+}
+
+themeSelect.value = loadTheme();
+applyTheme(loadTheme());
+
+themeSelect.addEventListener("change", () => {
+  localStorage.setItem(THEME_KEY, themeSelect.value);
+  applyTheme(themeSelect.value);
+});
+
+systemDarkQuery.addEventListener("change", () => {
+  if (loadTheme() === "system") {
+    applyTheme("system");
+  }
+});
+
+// ─── Clock color management ───
+
+const CLOCK_COLORS_KEY = "clock.ui.clockColors";
+
+const COLOR_IDS = {
+  "color-front-face": ["front", "face"],
+  "color-front-dial": ["front", "dial"],
+  "color-front-hand": ["front", "hand"],
+  "color-front-pin-up": ["front", "pinUp"],
+  "color-front-pin-down": ["front", "pinDown"],
+  "color-back-face": ["back", "face"],
+  "color-back-dial": ["back", "dial"],
+  "color-back-hand": ["back", "hand"],
+  "color-back-pin-up": ["back", "pinUp"],
+  "color-back-pin-down": ["back", "pinDown"],
+};
+
+function loadClockColors() {
+  try {
+    const raw = localStorage.getItem(CLOCK_COLORS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveClockColors(colors) {
+  localStorage.setItem(CLOCK_COLORS_KEY, JSON.stringify(colors));
+}
+
+function getClockColors() {
+  const saved = loadClockColors();
+  if (!saved) return DEFAULT_CLOCK_COLORS;
+  return {
+    front: { ...DEFAULT_CLOCK_COLORS.front, ...saved.front },
+    back: { ...DEFAULT_CLOCK_COLORS.back, ...saved.back },
+  };
+}
+
+function syncColorInputs() {
+  const colors = getClockColors();
+  for (const [id, [side, prop]] of Object.entries(COLOR_IDS)) {
+    const input = document.getElementById(id);
+    if (input) input.value = colors[side][prop];
+  }
+}
+
+function onColorChange() {
+  const colors = { front: {}, back: {} };
+  for (const [id, [side, prop]] of Object.entries(COLOR_IDS)) {
+    const input = document.getElementById(id);
+    if (input) colors[side][prop] = input.value;
+  }
+  saveClockColors(colors);
+  refreshAllPreviews();
+}
+
+for (const id of Object.keys(COLOR_IDS)) {
+  const input = document.getElementById(id);
+  if (input) input.addEventListener("input", onColorChange);
+}
+
+document.querySelector("#reset-clock-colors").addEventListener("click", () => {
+  localStorage.removeItem(CLOCK_COLORS_KEY);
+  syncColorInputs();
+  refreshAllPreviews();
+});
+
+syncColorInputs();
 
 // ─── Learn mode ───
 
@@ -214,6 +321,7 @@ function renderStrictRestoreBlock(scramble) {
         displayRightSideUp,
         twelveDown: step.step >= 4,
         handOffsetTurns: step.step >= 4 ? 6 : 0,
+        colors: getClockColors(),
       });
       stepBlock.append(stepText, stepPreview);
       wrapper.append(stepBlock);
@@ -243,7 +351,7 @@ function renderScrambles(scrambles) {
 
     const preview = document.createElement("div");
     preview.className = "scramble-preview";
-    preview.innerHTML = renderClockStateSvg(applyClockScramble(scramble, { resetPinsDownAtEnd }));
+    preview.innerHTML = renderClockStateSvg(applyClockScramble(scramble, { resetPinsDownAtEnd }), { colors: getClockColors() });
 
     const memoBlock = renderMemoBlock(scramble);
     const strictRestoreBlock = showStrictRestore ? renderStrictRestoreBlock(scramble) : null;
@@ -254,6 +362,14 @@ function renderScrambles(scrambles) {
     }
     outputList.appendChild(item);
   }
+}
+
+function refreshAllPreviews() {
+  const learnScrambles = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  if (learnScrambles.length > 0) {
+    renderScrambles(learnScrambles);
+  }
+  updateScramblePreview();
 }
 
 // ─── Learn mode history ───
@@ -559,7 +675,7 @@ showScramblePreviewCheckbox.addEventListener("change", () => {
 function updateScramblePreview() {
   if (showScramblePreviewCheckbox.checked && currentScramble) {
     const state = applyClockScramble(currentScramble, { resetPinsDownAtEnd: true });
-    trainerPreviewEl.innerHTML = renderClockStateSvg(state);
+    trainerPreviewEl.innerHTML = renderClockStateSvg(state, { colors: getClockColors() });
   } else {
     trainerPreviewEl.innerHTML = "";
   }

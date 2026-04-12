@@ -648,6 +648,23 @@ export function executeSevenSimulFlipRestoreWithTrace(scramble) {
   };
 }
 
+export const DEFAULT_CLOCK_COLORS = {
+  front: {
+    face: "#1e293b",
+    dial: "#cbd5e1",
+    hand: "#1e293b",
+    pinUp: "#38bdf8",
+    pinDown: "#0ea5e9",
+  },
+  back: {
+    face: "#e2e8f0",
+    dial: "#1e293b",
+    hand: "#f8fafc",
+    pinUp: "#2563eb",
+    pinDown: "#1d4ed8",
+  },
+};
+
 function handPoint(cx, cy, angleDeg, length) {
   const angle = ((angleDeg - 90) * Math.PI) / 180;
   return {
@@ -679,16 +696,18 @@ function renderFace(posit, faceStartIndex, originX, faceName, rightSideUp, pinsF
     displayRightSideUp = rightSideUp,
     twelveDown = false,
     handOffsetTurns = 0,
+    colors = DEFAULT_CLOCK_COLORS,
   } = options;
   const dialGap = 52;
   const dialRadius = 19;
   const pinRadius = 5;
   const sidePrefix = faceName === "left" ? (displayRightSideUp ? "back" : "front") : displayRightSideUp ? "front" : "back";
-  const faceColor = sidePrefix === "front" ? "#1e293b" : "#e2e8f0";
-  const dialColor = sidePrefix === "front" ? "#cbd5e1" : "#1e293b";
-  const handColor = sidePrefix === "front" ? "#1e293b" : "#f8fafc";
-  const pinUpColor = sidePrefix === "front" ? "#38bdf8" : "#2563eb";
-  const pinDownColor = sidePrefix === "front" ? "#0ea5e9" : "#1d4ed8";
+  const sc = colors[sidePrefix] || DEFAULT_CLOCK_COLORS[sidePrefix];
+  const faceColor = sc.face;
+  const dialColor = sc.dial;
+  const handColor = sc.hand;
+  const pinUpColor = sc.pinUp;
+  const pinDownColor = sc.pinDown;
 
   pieces.push(`<circle cx="${originX}" cy="112" r="84" fill="${faceColor}" stroke="#0f172a" stroke-width="2" />`);
 
@@ -742,6 +761,7 @@ export function renderClockStateSvg(state, options = {}) {
     displayRightSideUp = state.rightSideUp,
     twelveDown = false,
     handOffsetTurns = 0,
+    colors = DEFAULT_CLOCK_COLORS,
   } = options;
   const renderOptions = {
     ghostPosit: ghostState?.posit ?? null,
@@ -749,6 +769,7 @@ export function renderClockStateSvg(state, options = {}) {
     displayRightSideUp,
     twelveDown,
     handOffsetTurns,
+    colors,
   };
   const left = renderFace(state.posit, 0, 108, "left", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
   const right = renderFace(state.posit, 9, 324, "right", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
