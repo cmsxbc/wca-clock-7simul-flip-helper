@@ -372,6 +372,31 @@ function renderStrictRestoreBlock(scramble) {
       : t("strict.legend.table");
     wrapper.append(legend);
 
+    const verboseDetails = document.createElement("details");
+    verboseDetails.className = "strict-verbose-details";
+    const verboseSummary = document.createElement("summary");
+    verboseSummary.textContent = t("strict.verboseToggle");
+    verboseDetails.append(verboseSummary);
+    const verboseWrap = document.createElement("div");
+    verboseWrap.className = "memo-table-wrap";
+    const verboseTable = document.createElement("table");
+    verboseTable.className = "memo-table strict-verbose-table";
+    verboseTable.innerHTML = `<thead><tr><th>${t("strict.table.step")}</th><th>${t("strict.verbose.pins")}</th><th>${t("strict.verbose.ul")}</th><th>${t("strict.verbose.ur")}</th></tr></thead>`;
+    const verboseBody = document.createElement("tbody");
+    for (let i = 1; i <= 8; i++) {
+      const row = document.createElement("tr");
+      if (i === 4) {
+        row.innerHTML = `<td>${i}</td><td colspan="3" class="text-center">${t("trace.step4.action")}</td>`;
+      } else {
+        row.innerHTML = `<td>${i}</td><td>${t(`trace.step${i}.pins`)}</td><td>${t(`trace.step${i}.ul`)}</td><td>${t(`trace.step${i}.ur`)}</td>`;
+      }
+      verboseBody.append(row);
+    }
+    verboseTable.append(verboseBody);
+    verboseWrap.append(verboseTable);
+    verboseDetails.append(verboseWrap);
+    wrapper.append(verboseDetails);
+
     if (!showStrictDetails) {
       const tableWrap = document.createElement("div");
       tableWrap.className = "memo-table-wrap";
@@ -397,8 +422,10 @@ function renderStrictRestoreBlock(scramble) {
 
       const stepText = document.createElement("p");
       stepText.className = "strict-step-title";
-      const wheels = formatWheelTurns(step);
-      stepText.textContent = `${step.step}. ${t(`trace.step${step.step}`)}（${wheels}）`;
+      stepText.textContent = `${step.step}. ${t(`trace.step${step.step}`)}`;
+      const stepOps = document.createElement("p");
+      stepOps.className = "strict-step-ops";
+      stepOps.textContent = formatWheelTurns(step);
 
       const ghostMask =
         previousState && previousState.rightSideUp === step.state.rightSideUp
@@ -418,7 +445,7 @@ function renderStrictRestoreBlock(scramble) {
         handOffsetTurns: step.step >= 4 ? 6 : 0,
         colors: getClockColors(),
       });
-      stepBlock.append(stepText, stepPreview);
+      stepBlock.append(stepText, stepOps, stepPreview);
       wrapper.append(stepBlock);
       previousState = step.state;
     }
