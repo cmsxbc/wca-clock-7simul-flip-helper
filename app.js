@@ -54,10 +54,8 @@ settingsOverlay.addEventListener("click", (e) => {
 
 // ─── Learn mode ───
 
-const form = document.querySelector("#scramble-form");
-const countInput = document.querySelector("#count");
+const learnGenerateBtn = document.querySelector("#learn-generate");
 const outputList = document.querySelector("#output-list");
-const copyButton = document.querySelector("#copy-all");
 const statusText = document.querySelector("#status");
 const customForm = document.querySelector("#custom-form");
 const customInput = document.querySelector("#custom-scramble");
@@ -241,7 +239,7 @@ function renderScrambles(scrambles) {
 
     const text = document.createElement("p");
     text.className = "scramble-text";
-    text.textContent = `${index + 1}. ${scramble}`;
+    text.textContent = scrambles.length === 1 ? scramble : `${index + 1}. ${scramble}`;
 
     const preview = document.createElement("div");
     preview.className = "scramble-preview";
@@ -256,24 +254,21 @@ function renderScrambles(scrambles) {
     }
     outputList.appendChild(item);
   }
-
-  copyButton.disabled = scrambles.length === 0;
-  statusText.textContent = `已生成 ${scrambles.length} 条魔表打乱。`;
-}
-
-function getCountValue() {
-  const parsed = Number.parseInt(countInput.value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) {
-    return 1;
-  }
-  return Math.min(parsed, 200);
 }
 
 // ─── Learn mode history ───
 
 const HISTORY_KEY = "clock.learnHistory.scrambles";
 const historyList = document.querySelector("#history-list");
+const historyPanel = document.querySelector("#history-panel");
 const clearHistoryBtn = document.querySelector("#clear-history");
+
+const wideScreenQuery = window.matchMedia("(min-width: 1024px)");
+function syncHistoryPanelOpen(mq) {
+  if (mq.matches) historyPanel.open = true;
+}
+syncHistoryPanelOpen(wideScreenQuery);
+wideScreenQuery.addEventListener("change", syncHistoryPanelOpen);
 
 function loadHistory() {
   try {
@@ -331,14 +326,16 @@ clearHistoryBtn.addEventListener("click", (e) => {
   renderHistory();
 });
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const count = getCountValue();
-  countInput.value = String(count);
-  const scrambles = generateClockScrambles(count);
+function learnGenerate() {
+  const scrambles = generateClockScrambles(1);
   pushHistory(scrambles);
   renderScrambles(scrambles);
   renderHistory();
+}
+
+learnGenerateBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  learnGenerate();
 });
 
 customForm.addEventListener("submit", (event) => {
@@ -356,18 +353,6 @@ customForm.addEventListener("submit", (event) => {
     statusText.textContent = "已渲染你输入的打乱。";
   } catch (error) {
     statusText.textContent = `打乱格式有误：${error.message}`;
-  }
-});
-
-copyButton.addEventListener("click", async () => {
-  const lines = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
-  const payload = lines.join("\n");
-
-  try {
-    await navigator.clipboard.writeText(payload);
-    statusText.textContent = "已复制所有打乱到剪贴板。";
-  } catch {
-    statusText.textContent = "复制失败，请手动选择文本复制。";
   }
 });
 
@@ -418,13 +403,14 @@ showStrictDetailsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showStri
 showGhostHandsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showGhostHands, false);
 applyOptionDependencies();
 
-renderScrambles(generateClockScrambles(getCountValue()));
+renderScrambles(generateClockScrambles(1));
 renderHistory();
 
 // ─── Mode switching ───
 
 const tabButtons = document.querySelectorAll(".tab-btn");
 const modeLearn = document.querySelector("#mode-learn");
+const modeGenerator = document.querySelector("#mode-generator");
 const modeTrainer = document.querySelector("#mode-trainer");
 const MODE_KEY = "clock.ui.mode";
 
@@ -433,6 +419,7 @@ function switchMode(mode) {
     btn.classList.toggle("active", btn.dataset.mode === mode);
   }
   modeLearn.classList.toggle("visible", mode === "learn");
+  modeGenerator.classList.toggle("visible", mode === "generator");
   modeTrainer.classList.toggle("visible", mode === "trainer");
   localStorage.setItem(MODE_KEY, mode);
 
@@ -456,11 +443,78 @@ document.addEventListener("keydown", (e) => {
   if (!modeLearn.classList.contains("visible")) return;
 
   e.preventDefault();
-  countInput.value = "1";
-  const scrambles = generateClockScrambles(1);
-  pushHistory(scrambles);
-  renderScrambles(scrambles);
-  renderHistory();
+  learnGenerate();
+});
+
+// ─── Generator mode ───
+
+const genForm = document.querySelector("#gen-form");
+const genCountInput = document.querySelector("#gen-count");
+const genCopyBtn = document.querySelector("#gen-copy-all");
+const genOutputList = document.querySelector("#gen-output-list");
+const genStatusText = document.querySelector("#gen-status");
+
+const GEN_COUNT_KEY = "clock.generator.count";
+
+function loadGenCount() {
+  const stored = localStorage.getItem(GEN_COUNT_KEY);
+  const parsed = Number.parseInt(stored, 10);
+  return Number.isFinite(parsed) && parsed >= 1 ? Math.min(parsed, 200) : 5;
+}
+
+function saveGenCount(value) {
+  localStorage.setItem(GEN_COUNT_KEY, String(value));
+}
+
+genCountInput.value = String(loadGenCount());
+
+function getGenCountValue() {
+  const parsed = Number.parseInt(genCountInput.value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return 5;
+  return Math.min(parsed, 200);
+}
+
+function renderGenScrambles(scrambles) {
+  genOutputList.innerHTML = "";
+  for (const [index, scramble] of scrambles.entries()) {
+    const item = document.createElement("li");
+    item.className = "scramble-item";
+    item.dataset.scramble = scramble;
+
+    const text = document.createElement("p");
+    text.className = "scramble-text";
+    text.textContent = `${index + 1}. ${scramble}`;
+
+    const memo = calculateSevenSimulFlipMemo(scramble);
+    const memoEl = document.createElement("p");
+    memoEl.className = "memo-summary";
+    memoEl.style.marginTop = "4px";
+    memoEl.textContent = `记忆：${memo.summary}`;
+
+    item.append(text, memoEl);
+    genOutputList.appendChild(item);
+  }
+  genCopyBtn.disabled = scrambles.length === 0;
+  genStatusText.textContent = `已生成 ${scrambles.length} 条魔表打乱。`;
+}
+
+genForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const count = getGenCountValue();
+  genCountInput.value = String(count);
+  saveGenCount(count);
+  renderGenScrambles(generateClockScrambles(count));
+});
+
+genCopyBtn.addEventListener("click", async () => {
+  const lines = [...genOutputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  const payload = lines.join("\n");
+  try {
+    await navigator.clipboard.writeText(payload);
+    genStatusText.textContent = "已复制所有打乱到剪贴板。";
+  } catch {
+    genStatusText.textContent = "复制失败，请手动选择文本复制。";
+  }
 });
 
 // ─── Memo Trainer ───

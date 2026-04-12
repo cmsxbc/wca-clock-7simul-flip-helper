@@ -814,6 +814,125 @@
         color: #f8fafc;
         font-size: 0.9rem;
       }
+
+      /* ── Responsive: Tablet (768px+) ── */
+
+      @media (min-width: 768px) {
+        .container {
+          max-width: 100%;
+          padding: 28px 40px 48px;
+        }
+
+        .trainer-stats {
+          grid-template-columns: repeat(6, 1fr);
+        }
+
+        .trainer-timer {
+          font-size: 5rem;
+        }
+      }
+
+      /* ── Responsive: Desktop (1024px+) ── */
+
+      @media (min-width: 1024px) {
+        .container {
+          max-width: 1440px;
+          padding: 32px 48px 48px;
+        }
+
+        /* Learn: body with history sidebar */
+
+        .learn-body {
+          display: grid;
+          grid-template-columns: 1fr 300px;
+          gap: 24px;
+          align-items: start;
+        }
+
+        .learn-aside {
+          position: sticky;
+          top: 24px;
+          margin-bottom: 0;
+        }
+
+        .learn-aside .history-list {
+          max-height: 70vh;
+        }
+
+        /* Learn: scramble items keep stacked layout so preview SVG stays full-width */
+
+        /* Learn: strict restore steps in multi-column grid */
+
+        .strict-restore-block {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px 16px;
+        }
+
+        .strict-restore-block > .strict-restore-title,
+        .strict-restore-block > .status,
+        .strict-restore-block > .memo-table-wrap {
+          grid-column: 1 / -1;
+        }
+
+        /* Trainer: 2-column layout */
+
+        .trainer-layout {
+          display: grid;
+          grid-template-columns: 1fr 360px;
+          gap: 32px;
+          align-items: start;
+        }
+
+        .trainer-sidebar {
+          position: sticky;
+          top: 24px;
+          border-left: 1px solid #334155;
+          padding-left: 32px;
+        }
+
+        .trainer-sidebar .trainer-stats {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .trainer-sidebar .trainer-results-list {
+          max-height: 60vh;
+        }
+
+        .trainer-scramble {
+          font-size: 1.2rem;
+        }
+
+        .trainer-timer {
+          font-size: 5.5rem;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        
+      }
+
+      /* ── Responsive: Wide desktop (1400px+) ── */
+
+      @media (min-width: 1400px) {
+        .container {
+          max-width: 1600px;
+        }
+
+        .trainer-layout {
+          grid-template-columns: 1fr 440px;
+        }
+
+        .learn-body {
+          grid-template-columns: 1fr 360px;
+        }
+
+        .strict-restore-block {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
     </style>
   </head>
   <body>
@@ -872,14 +991,18 @@
       </div>
 
       <nav class="tab-bar">
-        <button class="tab-btn active" data-mode="learn">学习模式</button>
         <button class="tab-btn" data-mode="trainer">记忆练习</button>
+        <button class="tab-btn active" data-mode="learn">学习模式</button>
+        <button class="tab-btn" data-mode="generator">打乱生成</button>
       </nav>
 
       <div id="mode-learn" class="mode-container visible">
 
       <details id="custom-panel" class="panel collapsible-panel">
-        <summary class="panel-toggle">输入自定义打乱</summary>
+        <summary class="panel-toggle">
+          输入自定义打乱
+          <button id="learn-generate" type="button" style="margin-left:auto;" title="生成练习打乱（快捷键 →）">生成打乱 <kbd>→</kbd></button>
+        </summary>
         <form id="custom-form" class="custom-form-inner">
           <textarea
             id="custom-scramble"
@@ -892,77 +1015,90 @@
         </form>
       </details>
 
-      <form id="scramble-form">
-        <label for="count">生成条数：</label>
-        <input id="count" name="count" type="number" min="1" max="200" value="1" />
-        <button type="submit" title="生成练习打乱（快捷键 →）">生成 <kbd>→</kbd></button>
-        <button id="copy-all" type="button" class="secondary icon-btn" disabled title="复制全部"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-      </form>
-
       <div id="status" class="status"></div>
-      <ol id="output-list" class="list"></ol>
 
-      <details id="history-panel" class="panel collapsible-panel">
-        <summary class="panel-toggle">
-          历史记录
-          <button id="clear-history" class="btn-danger" type="button" style="margin-left:auto;">清空历史</button>
-        </summary>
-        <ul id="history-list" class="history-list"></ul>
-      </details>
+      <div class="learn-body">
+        <ol id="output-list" class="list"></ol>
 
+        <details id="history-panel" class="panel collapsible-panel learn-aside">
+          <summary class="panel-toggle">
+            历史记录
+            <button id="clear-history" class="btn-danger" type="button" style="margin-left:auto;">清空历史</button>
+          </summary>
+          <ul id="history-list" class="history-list"></ul>
+        </details>
+      </div>
 
       </div><!-- /mode-learn -->
+
+      <div id="mode-generator" class="mode-container">
+        <form id="gen-form">
+          <label for="gen-count">生成条数：</label>
+          <input id="gen-count" name="gen-count" type="number" min="1" max="200" value="5" />
+          <button type="submit">生成</button>
+          <button id="gen-copy-all" type="button" class="secondary icon-btn" disabled title="复制全部"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        </form>
+        <div id="gen-status" class="status"></div>
+        <ol id="gen-output-list" class="list"></ol>
+      </div><!-- /mode-generator -->
 
       <div id="mode-trainer" class="mode-container">
 
         <div id="trainer-scramble" class="trainer-scramble"></div>
-        <div id="trainer-preview" class="trainer-preview"></div>
-        <div id="trainer-touch-zone" class="trainer-touch-zone">
-          <div id="trainer-timer" class="trainer-timer color-idle">0.000</div>
-          <div id="trainer-hint" class="trainer-hint">长按空格或触屏 1 秒准备计时</div>
-        </div>
-        <div id="trainer-result" class="trainer-result"></div>
 
-        <div id="trainer-input-area" class="trainer-input-area">
-          <input
-            id="trainer-input"
-            class="trainer-input"
-            type="text"
-            autocomplete="off"
-            inputmode="none"
-            placeholder="输入记忆码"
-          />
-          <div id="virtual-keypad" class="virtual-keypad">
-            <div class="keypad-row">
-              <button type="button" class="keypad-key" data-key="1">1</button>
-              <button type="button" class="keypad-key" data-key="2">2</button>
-              <button type="button" class="keypad-key" data-key="3">3</button>
-              <button type="button" class="keypad-key" data-key="4">4</button>
-              <button type="button" class="keypad-key" data-key="5">5</button>
-              <button type="button" class="keypad-key" data-key="6">6</button>
+        <div class="trainer-layout">
+          <div class="trainer-main">
+            <div id="trainer-preview" class="trainer-preview"></div>
+            <div id="trainer-touch-zone" class="trainer-touch-zone">
+              <div id="trainer-timer" class="trainer-timer color-idle">0.000</div>
+              <div id="trainer-hint" class="trainer-hint">长按空格或触屏 1 秒准备计时</div>
             </div>
-            <div class="keypad-row">
-              <button type="button" class="keypad-key" data-key="A">A</button>
-              <button type="button" class="keypad-key" data-key="B">B</button>
-              <button type="button" class="keypad-key" data-key="C">C</button>
-              <button type="button" class="keypad-key" data-key="D">D</button>
-              <button type="button" class="keypad-key" data-key="E">E</button>
-              <button type="button" class="keypad-key keypad-del" data-key="DEL">DEL</button>
-            </div>
-            <div class="keypad-row keypad-row-submit">
-              <button type="button" id="keypad-submit" class="keypad-key keypad-submit">提交</button>
+            <div id="trainer-result" class="trainer-result"></div>
+
+            <div id="trainer-input-area" class="trainer-input-area">
+              <input
+                id="trainer-input"
+                class="trainer-input"
+                type="text"
+                autocomplete="off"
+                inputmode="none"
+                placeholder="输入记忆码"
+              />
+              <div id="virtual-keypad" class="virtual-keypad">
+                <div class="keypad-row">
+                  <button type="button" class="keypad-key" data-key="1">1</button>
+                  <button type="button" class="keypad-key" data-key="2">2</button>
+                  <button type="button" class="keypad-key" data-key="3">3</button>
+                  <button type="button" class="keypad-key" data-key="4">4</button>
+                  <button type="button" class="keypad-key" data-key="5">5</button>
+                  <button type="button" class="keypad-key" data-key="6">6</button>
+                </div>
+                <div class="keypad-row">
+                  <button type="button" class="keypad-key" data-key="A">A</button>
+                  <button type="button" class="keypad-key" data-key="B">B</button>
+                  <button type="button" class="keypad-key" data-key="C">C</button>
+                  <button type="button" class="keypad-key" data-key="D">D</button>
+                  <button type="button" class="keypad-key" data-key="E">E</button>
+                  <button type="button" class="keypad-key keypad-del" data-key="DEL">DEL</button>
+                </div>
+                <div class="keypad-row keypad-row-submit">
+                  <button type="button" id="keypad-submit" class="keypad-key keypad-submit">提交</button>
+                </div>
+              </div>
             </div>
           </div>
+
+          <div class="trainer-sidebar">
+            <div id="trainer-stats" class="trainer-stats"></div>
+
+            <div class="trainer-results-header">
+              <h3>成绩记录</h3>
+              <button id="clear-results" class="btn-danger" type="button">清空全部</button>
+            </div>
+
+            <ul id="trainer-results-list" class="trainer-results-list"></ul>
+          </div>
         </div>
-
-        <div id="trainer-stats" class="trainer-stats"></div>
-
-        <div class="trainer-results-header">
-          <h3>成绩记录</h3>
-          <button id="clear-results" class="btn-danger" type="button">清空全部</button>
-        </div>
-
-        <ul id="trainer-results-list" class="trainer-results-list"></ul>
 
       </div><!-- /mode-trainer -->
 
