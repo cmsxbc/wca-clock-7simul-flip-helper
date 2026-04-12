@@ -20,6 +20,28 @@ import {
   formatTime,
 } from "./memo-trainer.js";
 
+// ─── Settings panel ───
+
+const settingsOverlay = document.querySelector("#settings-overlay");
+const settingsBtn = document.querySelector("#settings-btn");
+const settingsCloseBtn = document.querySelector("#settings-close");
+
+settingsBtn.addEventListener("click", () => {
+  settingsOverlay.classList.add("open");
+});
+
+settingsCloseBtn.addEventListener("click", () => {
+  settingsOverlay.classList.remove("open");
+});
+
+settingsOverlay.addEventListener("click", (e) => {
+  if (e.target === settingsOverlay) {
+    settingsOverlay.classList.remove("open");
+  }
+});
+
+// ─── Learn mode ───
+
 const form = document.querySelector("#scramble-form");
 const countInput = document.querySelector("#count");
 const outputList = document.querySelector("#output-list");
@@ -281,7 +303,7 @@ function renderHistory() {
     dateSpan.className = "history-date";
     dateSpan.textContent = formatHistoryDate(entry.date);
 
-    li.append(scrambleSpan, dateSpan);
+    li.append(dateSpan, scrambleSpan);
     li.addEventListener("click", () => {
       renderScrambles([entry.scramble]);
       statusText.textContent = "已从历史记录加载打乱。";
@@ -431,6 +453,7 @@ document.addEventListener("keydown", (e) => {
 
 // ─── Memo Trainer ───
 
+const trainerTouchZone = document.querySelector("#trainer-touch-zone");
 const trainerScrambleEl = document.querySelector("#trainer-scramble");
 const trainerTimerEl = document.querySelector("#trainer-timer");
 const trainerHintEl = document.querySelector("#trainer-hint");
@@ -438,6 +461,8 @@ const trainerResultEl = document.querySelector("#trainer-result");
 const trainerInputArea = document.querySelector("#trainer-input-area");
 const trainerInput = document.querySelector("#trainer-input");
 const trainerPreviewEl = document.querySelector("#trainer-preview");
+const virtualKeypad = document.querySelector("#virtual-keypad");
+const keypadSubmitBtn = document.querySelector("#keypad-submit");
 const showScramblePreviewCheckbox = document.querySelector("#show-scramble-preview");
 const confirmKeySelect = document.querySelector("#confirm-key-select");
 const trainerStatsEl = document.querySelector("#trainer-stats");
@@ -553,18 +578,23 @@ function handleTimerStateChange(state) {
     case TimerState.IDLE:
       setTimerColor("color-idle");
       trainerTimerEl.textContent = "0.000";
-      trainerHintEl.textContent = "长按空格 1 秒准备计时";
+      trainerHintEl.textContent = "长按空格或触屏 1 秒准备计时";
       trainerInputArea.classList.remove("visible");
       trainerResultEl.textContent = "";
       trainerInput.value = "";
+      trainerTouchZone.classList.remove("zone-holding", "zone-ready");
       break;
     case TimerState.HOLDING:
       setTimerColor("color-holding");
       trainerHintEl.textContent = "继续按住...";
+      trainerTouchZone.classList.add("zone-holding");
+      trainerTouchZone.classList.remove("zone-ready");
       break;
     case TimerState.READY:
       setTimerColor("color-ready");
       trainerHintEl.textContent = "松开开始！";
+      trainerTouchZone.classList.remove("zone-holding");
+      trainerTouchZone.classList.add("zone-ready");
       break;
     case TimerState.RUNNING:
       setTimerColor("color-running");
@@ -572,6 +602,7 @@ function handleTimerStateChange(state) {
       trainerInputArea.classList.add("visible");
       trainerInput.value = "";
       trainerInput.focus();
+      trainerTouchZone.classList.remove("zone-holding", "zone-ready");
       break;
     case TimerState.INPUT:
       break;
@@ -595,7 +626,7 @@ function finishRound() {
     trainerResultEl.style.color = "#f87171";
   }
 
-  trainerHintEl.textContent = "按空格开始下一轮";
+  trainerHintEl.textContent = "按空格或触屏开始下一轮";
   trainerInputArea.classList.remove("visible");
 
   const record = {
@@ -670,6 +701,84 @@ function onTrainerInputKeydown(e) {
   }
 }
 
+// ─── Virtual keypad ───
+
+function isInsideInputOrKeypad(el) {
+  return trainerInputArea.contains(el);
+}
+
+virtualKeypad.addEventListener("click", (e) => {
+  const btn = e.target.closest(".keypad-key");
+  if (!btn) return;
+  e.stopPropagation();
+
+  const state = timer?.getState();
+  if (state !== TimerState.RUNNING && state !== TimerState.INPUT) return;
+
+  if (state === TimerState.RUNNING) {
+    timer.beginInput();
+  }
+
+  const key = btn.dataset.key;
+  if (key === "DEL") {
+    trainerInput.value = trainerInput.value.slice(0, -1);
+  } else {
+    trainerInput.value += key;
+  }
+  trainerInput.focus();
+});
+
+keypadSubmitBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const state = timer?.getState();
+  if (state === TimerState.RUNNING || state === TimerState.INPUT) {
+    timer.confirm();
+    finishRound();
+  }
+});
+
+// ─── Touch-based timer start/stop ───
+
+function onTouchZoneStart(e) {
+  if (!trainerActive || !timer) return;
+  const state = timer.getState();
+
+  if (state === TimerState.IDLE) {
+    e.preventDefault();
+    timer.handleKeyDown();
+    return;
+  }
+
+  if (state === TimerState.FINISHED) {
+    e.preventDefault();
+    timer.reset();
+    return;
+  }
+}
+
+function onTouchZoneEnd(e) {
+  if (!trainerActive || !timer) return;
+  const state = timer.getState();
+
+  if (state === TimerState.HOLDING || state === TimerState.READY) {
+    e.preventDefault();
+    timer.handleKeyUp((ms) => {
+      trainerTimerEl.textContent = formatTime(ms);
+    });
+  }
+}
+
+function onTrainerTouchStop(e) {
+  if (!trainerActive || !timer) return;
+  const state = timer.getState();
+  if (state !== TimerState.RUNNING && state !== TimerState.INPUT) return;
+  if (isInsideInputOrKeypad(e.target)) return;
+
+  e.preventDefault();
+  timer.confirm();
+  finishRound();
+}
+
 function initTrainer() {
   if (trainerActive) return;
   trainerActive = true;
@@ -685,6 +794,9 @@ function initTrainer() {
   document.addEventListener("keydown", trainerKeydownHandler);
   document.addEventListener("keyup", trainerKeyupHandler);
   trainerInput.addEventListener("keydown", onTrainerInputKeydown);
+  trainerTouchZone.addEventListener("touchstart", onTouchZoneStart, { passive: false });
+  trainerTouchZone.addEventListener("touchend", onTouchZoneEnd, { passive: false });
+  modeTrainer.addEventListener("touchstart", onTrainerTouchStop, { passive: false });
 }
 
 function teardownTrainer() {
@@ -698,6 +810,9 @@ function teardownTrainer() {
   document.removeEventListener("keydown", trainerKeydownHandler);
   document.removeEventListener("keyup", trainerKeyupHandler);
   trainerInput.removeEventListener("keydown", onTrainerInputKeydown);
+  trainerTouchZone.removeEventListener("touchstart", onTouchZoneStart);
+  trainerTouchZone.removeEventListener("touchend", onTouchZoneEnd);
+  modeTrainer.removeEventListener("touchstart", onTrainerTouchStop);
 }
 
 clearResultsBtn.addEventListener("click", () => {

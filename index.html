@@ -259,9 +259,12 @@
         margin-top: 10px;
       }
 
-      .shortcut-hint {
-        font-size: 0.85rem;
-        color: #64748b;
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 10px;
+        line-height: 0;
       }
 
       kbd {
@@ -272,6 +275,12 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
         font-size: 0.82rem;
         color: #cbd5e1;
+      }
+
+      button kbd {
+        background: rgba(0, 0, 0, 0.2);
+        border-color: rgba(0, 0, 0, 0.15);
+        color: inherit;
       }
 
       /* History list */
@@ -369,6 +378,25 @@
         word-break: break-word;
       }
 
+      .trainer-touch-zone {
+        border: 2px dashed #334155;
+        border-radius: 12px;
+        padding: 8px 16px;
+        margin-bottom: 8px;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: border-color 0.15s;
+      }
+
+      .trainer-touch-zone.zone-holding {
+        border-color: #f87171;
+      }
+
+      .trainer-touch-zone.zone-ready {
+        border-color: #4ade80;
+      }
+
       .trainer-timer {
         text-align: center;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -429,18 +457,67 @@
         font-weight: 600;
       }
 
-      .trainer-config {
+      /* Virtual keypad */
+      .virtual-keypad {
+        margin-top: 12px;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 10px;
-        margin-bottom: 20px;
-        color: #94a3b8;
-        font-size: 0.9rem;
+        gap: 8px;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
-      .trainer-config-sep {
-        color: #475569;
+      .keypad-row {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+      }
+
+      .keypad-key {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 12px;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        background: #1e293b;
+        color: #f8fafc;
+        font-size: 1.1rem;
+        font-weight: 600;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .keypad-key:active {
+        background: #334155;
+      }
+
+      .keypad-del {
+        background: #7f1d1d;
+        color: #fca5a5;
+        border-color: #7f1d1d;
+        font-size: 0.85rem;
+      }
+
+      .keypad-del:active {
+        background: #991b1b;
+      }
+
+      .keypad-submit {
+        min-width: 120px;
+        background: #38bdf8;
+        color: #0f172a;
+        border-color: #38bdf8;
+      }
+
+      .keypad-submit:active {
+        background: #0ea5e9;
+      }
+
+      .keypad-row-submit {
+        margin-top: 4px;
       }
 
       .trainer-preview {
@@ -451,15 +528,6 @@
 
       .trainer-preview:empty {
         display: none;
-      }
-
-      .trainer-config select {
-        padding: 4px 8px;
-        border: 1px solid #475569;
-        border-radius: 6px;
-        background: #1e293b;
-        color: #f8fafc;
-        font-size: 0.9rem;
       }
 
       .trainer-stats {
@@ -583,11 +651,192 @@
       .btn-danger:hover {
         background: #991b1b;
       }
+
+      /* Settings panel */
+      .header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .header-row h1 {
+        margin: 0;
+        min-width: 0;
+      }
+
+      @media (max-width: 480px) {
+        .header-row h1 {
+          font-size: 1.25rem;
+        }
+      }
+
+      .settings-btn {
+        background: transparent;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        padding: 6px;
+        color: #94a3b8;
+        cursor: pointer;
+        line-height: 0;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.15s, border-color 0.15s;
+      }
+
+      .settings-btn:hover {
+        color: #e2e8f0;
+        border-color: #64748b;
+      }
+
+      .settings-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      .settings-overlay.open {
+        display: block;
+      }
+
+      .settings-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(320px, 85vw);
+        background: #0f172a;
+        border-left: 1px solid #334155;
+        padding: 20px 16px;
+        overflow-y: auto;
+        z-index: 101;
+        transform: translateX(100%);
+        transition: transform 0.2s ease;
+      }
+
+      .settings-overlay.open .settings-panel {
+        transform: translateX(0);
+      }
+
+      .settings-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .settings-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .settings-close {
+        background: transparent;
+        border: 0;
+        color: #94a3b8;
+        font-size: 1.4rem;
+        cursor: pointer;
+        padding: 4px 8px;
+        line-height: 1;
+        border-radius: 6px;
+      }
+
+      .settings-close:hover {
+        color: #e2e8f0;
+      }
+
+      .settings-section {
+        margin-bottom: 20px;
+      }
+
+      .settings-section-title {
+        font-size: 0.82rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #1e293b;
+      }
+
+      .settings-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        color: #cbd5e1;
+        font-size: 0.92rem;
+      }
+
+      .settings-item select {
+        padding: 4px 8px;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        background: #1e293b;
+        color: #f8fafc;
+        font-size: 0.9rem;
+      }
     </style>
   </head>
   <body>
+    <div id="settings-overlay" class="settings-overlay">
+      <aside class="settings-panel">
+        <div class="settings-header">
+          <h2>设置</h2>
+          <button id="settings-close" class="settings-close" type="button">✕</button>
+        </div>
+
+        <div class="settings-section">
+          <p class="settings-section-title">学习模式</p>
+          <label class="settings-item" for="reset-pins">
+            <input id="reset-pins" type="checkbox" checked />
+            结束时将 pins 全部按下
+          </label>
+          <label class="settings-item" for="show-strict-restore">
+            <input id="show-strict-restore" type="checkbox" />
+            显示 7simul flip 执行过程
+          </label>
+          <label class="settings-item" for="show-memo-derivation">
+            <input id="show-memo-derivation" type="checkbox" />
+            显示记忆编码推导
+          </label>
+          <label class="settings-item" for="show-strict-details">
+            <input id="show-strict-details" type="checkbox" checked />
+            显示每一步状态图
+          </label>
+          <label class="settings-item" for="show-ghost-hands">
+            <input id="show-ghost-hands" type="checkbox" />
+            显示橙色虚线（上一步指针）
+          </label>
+        </div>
+
+        <div class="settings-section">
+          <p class="settings-section-title">记忆练习</p>
+          <label class="settings-item" for="show-scramble-preview">
+            <input id="show-scramble-preview" type="checkbox" />
+            显示打乱后状态
+          </label>
+          <div class="settings-item">
+            <label for="confirm-key-select">确认键：</label>
+            <select id="confirm-key-select">
+              <option value="Enter">Enter</option>
+              <option value="Space">Space</option>
+            </select>
+          </div>
+        </div>
+      </aside>
+    </div>
+
     <main class="container">
-      <h1>Clock 7simul Flip 学习助手</h1>
+      <div class="header-row">
+        <h1>Clock 7simul Flip 学习助手</h1>
+        <button id="settings-btn" class="settings-btn" type="button" title="设置"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/><line x1="15" y1="12" x2="20" y2="12"/><line x1="4" y1="12" x2="9" y2="12"/><line x1="15" y1="5" x2="20" y2="5"/><line x1="4" y1="5" x2="9" y2="5"/><line x1="15" y1="19" x2="20" y2="19"/><line x1="4" y1="19" x2="9" y2="19"/></svg></button>
+      </div>
 
       <nav class="tab-bar">
         <button class="tab-btn active" data-mode="learn">学习模式</button>
@@ -595,8 +844,6 @@
       </nav>
 
       <div id="mode-learn" class="mode-container visible">
-
-      <p>用于生成打乱、查看记忆编码与模拟执行步骤，辅助你练习和核对 7simul flip。</p>
 
       <details id="custom-panel" class="panel collapsible-panel">
         <summary class="panel-toggle">输入自定义打乱</summary>
@@ -612,37 +859,11 @@
         </form>
       </details>
 
-      <section class="panel">
-        <div class="inline" style="flex-wrap: wrap;">
-          <label class="inline" for="reset-pins">
-            <input id="reset-pins" type="checkbox" checked />
-            结束时将 pins 全部按下（常见展示方式）
-          </label>
-          <label class="inline" for="show-strict-restore">
-            <input id="show-strict-restore" type="checkbox" />
-            显示 7simul flip 执行过程
-          </label>
-          <label class="inline" for="show-memo-derivation">
-            <input id="show-memo-derivation" type="checkbox" />
-            显示记忆编码推导
-          </label>
-          <label class="inline" for="show-strict-details">
-            <input id="show-strict-details" type="checkbox" checked />
-            显示每一步状态图
-          </label>
-          <label class="inline" for="show-ghost-hands">
-            <input id="show-ghost-hands" type="checkbox" />
-            显示橙色虚线（上一步指针）
-          </label>
-        </div>
-      </section>
-
       <form id="scramble-form">
         <label for="count">生成条数：</label>
         <input id="count" name="count" type="number" min="1" max="200" value="1" />
-        <button type="submit">生成练习打乱</button>
-        <button id="copy-all" type="button" class="secondary" disabled>复制全部</button>
-        <span class="shortcut-hint">按 <kbd>→</kbd> 快速生成下一条</span>
+        <button type="submit" title="生成练习打乱（快捷键 →）">生成 <kbd>→</kbd></button>
+        <button id="copy-all" type="button" class="secondary icon-btn" disabled title="复制全部"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
       </form>
 
       <div id="status" class="status"></div>
@@ -656,9 +877,6 @@
         <ul id="history-list" class="history-list"></ul>
       </details>
 
-      <p class="meta">
-        说明：本工具仅用于 7simul flip 学习与自检；正式比赛请以 WCA 官方打乱程序为准。
-      </p>
 
       </div><!-- /mode-learn -->
 
@@ -666,8 +884,10 @@
 
         <div id="trainer-scramble" class="trainer-scramble"></div>
         <div id="trainer-preview" class="trainer-preview"></div>
-        <div id="trainer-timer" class="trainer-timer color-idle">0.000</div>
-        <div id="trainer-hint" class="trainer-hint">长按空格 2 秒准备计时</div>
+        <div id="trainer-touch-zone" class="trainer-touch-zone">
+          <div id="trainer-timer" class="trainer-timer color-idle">0.000</div>
+          <div id="trainer-hint" class="trainer-hint">长按空格或触屏 1 秒准备计时</div>
+        </div>
         <div id="trainer-result" class="trainer-result"></div>
 
         <div id="trainer-input-area" class="trainer-input-area">
@@ -676,21 +896,30 @@
             class="trainer-input"
             type="text"
             autocomplete="off"
+            inputmode="none"
             placeholder="输入记忆码"
           />
-        </div>
-
-        <div class="trainer-config">
-          <label class="inline" for="show-scramble-preview">
-            <input id="show-scramble-preview" type="checkbox" />
-            显示打乱后状态
-          </label>
-          <span class="trainer-config-sep">|</span>
-          <label for="confirm-key-select">确认键：</label>
-          <select id="confirm-key-select">
-            <option value="Enter">Enter</option>
-            <option value="Space">Space</option>
-          </select>
+          <div id="virtual-keypad" class="virtual-keypad">
+            <div class="keypad-row">
+              <button type="button" class="keypad-key" data-key="1">1</button>
+              <button type="button" class="keypad-key" data-key="2">2</button>
+              <button type="button" class="keypad-key" data-key="3">3</button>
+              <button type="button" class="keypad-key" data-key="4">4</button>
+              <button type="button" class="keypad-key" data-key="5">5</button>
+              <button type="button" class="keypad-key" data-key="6">6</button>
+            </div>
+            <div class="keypad-row">
+              <button type="button" class="keypad-key" data-key="A">A</button>
+              <button type="button" class="keypad-key" data-key="B">B</button>
+              <button type="button" class="keypad-key" data-key="C">C</button>
+              <button type="button" class="keypad-key" data-key="D">D</button>
+              <button type="button" class="keypad-key" data-key="E">E</button>
+              <button type="button" class="keypad-key keypad-del" data-key="DEL">DEL</button>
+            </div>
+            <div class="keypad-row keypad-row-submit">
+              <button type="button" id="keypad-submit" class="keypad-key keypad-submit">提交</button>
+            </div>
+          </div>
         </div>
 
         <div id="trainer-stats" class="trainer-stats"></div>
