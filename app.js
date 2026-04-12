@@ -2,9 +2,23 @@ import {
   applyClockScramble,
   calculateSevenSimulFlipMemo,
   executeSevenSimulFlipRestoreWithTrace,
+  generateClockScramble,
   generateClockScrambles,
   renderClockStateSvg,
 } from "./clock-scramble.js";
+
+import {
+  TimerState,
+  createTimerStateMachine,
+  validateMemo,
+  loadResults,
+  saveResult,
+  clearResults,
+  loadConfirmKey,
+  saveConfirmKey,
+  computeStats,
+  formatTime,
+} from "./memo-trainer.js";
 
 const form = document.querySelector("#scramble-form");
 const countInput = document.querySelector("#count");
@@ -305,3 +319,311 @@ showGhostHandsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showGhostHa
 applyOptionDependencies();
 
 renderScrambles(generateClockScrambles(getCountValue()));
+
+// ─── Mode switching ───
+
+const tabButtons = document.querySelectorAll(".tab-btn");
+const modeLearn = document.querySelector("#mode-learn");
+const modeTrainer = document.querySelector("#mode-trainer");
+const MODE_KEY = "clock.ui.mode";
+
+function switchMode(mode) {
+  for (const btn of tabButtons) {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  }
+  modeLearn.classList.toggle("visible", mode === "learn");
+  modeTrainer.classList.toggle("visible", mode === "trainer");
+  localStorage.setItem(MODE_KEY, mode);
+
+  if (mode === "trainer") {
+    initTrainer();
+  } else {
+    teardownTrainer();
+  }
+}
+
+for (const btn of tabButtons) {
+  btn.addEventListener("click", () => switchMode(btn.dataset.mode));
+}
+
+// ─── Memo Trainer ───
+
+const trainerScrambleEl = document.querySelector("#trainer-scramble");
+const trainerTimerEl = document.querySelector("#trainer-timer");
+const trainerHintEl = document.querySelector("#trainer-hint");
+const trainerResultEl = document.querySelector("#trainer-result");
+const trainerInputArea = document.querySelector("#trainer-input-area");
+const trainerInput = document.querySelector("#trainer-input");
+const trainerPreviewEl = document.querySelector("#trainer-preview");
+const showScramblePreviewCheckbox = document.querySelector("#show-scramble-preview");
+const confirmKeySelect = document.querySelector("#confirm-key-select");
+const trainerStatsEl = document.querySelector("#trainer-stats");
+const trainerResultsList = document.querySelector("#trainer-results-list");
+const clearResultsBtn = document.querySelector("#clear-results");
+
+let currentScramble = "";
+let currentExpected = "";
+let confirmKey = loadConfirmKey();
+let timer = null;
+let trainerKeydownHandler = null;
+let trainerKeyupHandler = null;
+let trainerActive = false;
+
+confirmKeySelect.value = confirmKey;
+confirmKeySelect.addEventListener("change", () => {
+  confirmKey = confirmKeySelect.value;
+  saveConfirmKey(confirmKey);
+});
+
+const SHOW_PREVIEW_KEY = "clock.memoTrainer.showPreview";
+showScramblePreviewCheckbox.checked = readCheckboxPreference(SHOW_PREVIEW_KEY, false);
+showScramblePreviewCheckbox.addEventListener("change", () => {
+  saveCheckboxPreference(SHOW_PREVIEW_KEY, showScramblePreviewCheckbox.checked);
+  updateScramblePreview();
+});
+
+function updateScramblePreview() {
+  if (showScramblePreviewCheckbox.checked && currentScramble) {
+    const state = applyClockScramble(currentScramble, { resetPinsDownAtEnd: true });
+    trainerPreviewEl.innerHTML = renderClockStateSvg(state);
+  } else {
+    trainerPreviewEl.innerHTML = "";
+  }
+}
+
+function generateNextScramble() {
+  currentScramble = generateClockScramble();
+  const memo = calculateSevenSimulFlipMemo(currentScramble);
+  currentExpected = memo.summary;
+  trainerScrambleEl.textContent = currentScramble;
+  updateScramblePreview();
+}
+
+function setTimerColor(cls) {
+  trainerTimerEl.className = "trainer-timer " + cls;
+}
+
+function renderStats() {
+  const results = loadResults();
+  const stats = computeStats(results);
+  const items = [
+    { label: "Best", value: formatTime(stats.best) },
+    { label: "Mo3", value: formatTime(stats.mo3) },
+    { label: "Ao5", value: formatTime(stats.ao5) },
+    { label: "Ao12", value: formatTime(stats.ao12) },
+    { label: "Mean", value: formatTime(stats.mean) },
+    { label: "次数", value: `${stats.valid}/${stats.total}` },
+  ];
+  trainerStatsEl.innerHTML = items
+    .map(
+      (item) =>
+        `<div class="stat-card"><div class="stat-label">${item.label}</div><div class="stat-value">${item.value}</div></div>`,
+    )
+    .join("");
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function renderResultsList() {
+  const results = loadResults();
+  trainerResultsList.innerHTML = "";
+  for (let i = results.length - 1; i >= 0; i--) {
+    const r = results[i];
+    const li = document.createElement("li");
+
+    const row = document.createElement("div");
+    row.className = "result-item";
+
+    const indexSpan = document.createElement("span");
+    indexSpan.className = "result-index";
+    indexSpan.textContent = `${i + 1}.`;
+
+    const timeSpan = document.createElement("span");
+    timeSpan.className = r.valid ? "result-time" : "result-time dnf";
+    timeSpan.textContent = r.valid ? formatTime(r.time) : `DNF (${formatTime(r.time)})`;
+
+    const dateSpan = document.createElement("span");
+    dateSpan.className = "result-date";
+    dateSpan.textContent = formatDate(r.date);
+
+    row.append(indexSpan, timeSpan, dateSpan);
+
+    const detail = document.createElement("div");
+    detail.className = "result-detail";
+    detail.innerHTML = `<p>打乱：${r.scramble}</p><p>正确：${r.expected}</p><p>输入：${r.input || "(空)"}</p>`;
+
+    row.addEventListener("click", () => {
+      detail.classList.toggle("visible");
+    });
+
+    li.append(row, detail);
+    trainerResultsList.appendChild(li);
+  }
+}
+
+function handleTimerStateChange(state) {
+  switch (state) {
+    case TimerState.IDLE:
+      setTimerColor("color-idle");
+      trainerTimerEl.textContent = "0.000";
+      trainerHintEl.textContent = "长按空格 1 秒准备计时";
+      trainerInputArea.classList.remove("visible");
+      trainerResultEl.textContent = "";
+      trainerInput.value = "";
+      break;
+    case TimerState.HOLDING:
+      setTimerColor("color-holding");
+      trainerHintEl.textContent = "继续按住...";
+      break;
+    case TimerState.READY:
+      setTimerColor("color-ready");
+      trainerHintEl.textContent = "松开开始！";
+      break;
+    case TimerState.RUNNING:
+      setTimerColor("color-running");
+      trainerHintEl.textContent = "输入记忆码后按 " + (confirmKey === "Space" ? "空格" : "回车") + " 提交";
+      trainerInputArea.classList.add("visible");
+      trainerInput.value = "";
+      trainerInput.focus();
+      break;
+    case TimerState.INPUT:
+      break;
+    case TimerState.FINISHED:
+      break;
+  }
+}
+
+function finishRound() {
+  const elapsed = timer.getElapsed();
+  const userInput = trainerInput.value.trim();
+  const valid = validateMemo(userInput, currentExpected);
+
+  if (valid) {
+    setTimerColor("color-valid");
+    trainerResultEl.textContent = `✓ 正确！`;
+    trainerResultEl.style.color = "#4ade80";
+  } else {
+    setTimerColor("color-dnf");
+    trainerResultEl.textContent = `✗ 错误 — 正确答案：${currentExpected}`;
+    trainerResultEl.style.color = "#f87171";
+  }
+
+  trainerHintEl.textContent = "按空格开始下一轮";
+  trainerInputArea.classList.remove("visible");
+
+  const record = {
+    id: Date.now(),
+    scramble: currentScramble,
+    expected: currentExpected,
+    input: userInput,
+    time: Math.round(elapsed),
+    valid,
+    date: new Date().toISOString(),
+  };
+  saveResult(record);
+  renderStats();
+  renderResultsList();
+
+  generateNextScramble();
+}
+
+function onTrainerKeydown(e) {
+  if (!trainerActive) return;
+  const state = timer.getState();
+
+  if (e.code === "Space" && state === TimerState.IDLE && document.activeElement !== trainerInput) {
+    e.preventDefault();
+    timer.handleKeyDown();
+    return;
+  }
+
+  if (state === TimerState.HOLDING || state === TimerState.READY) {
+    if (e.code === "Space") {
+      e.preventDefault();
+    }
+    return;
+  }
+
+  if (e.code === "Space" && state === TimerState.FINISHED && document.activeElement !== trainerInput) {
+    e.preventDefault();
+    timer.reset();
+    return;
+  }
+}
+
+function onTrainerKeyup(e) {
+  if (!trainerActive) return;
+  const state = timer.getState();
+
+  if (e.code === "Space" && (state === TimerState.HOLDING || state === TimerState.READY)) {
+    e.preventDefault();
+    timer.handleKeyUp((ms) => {
+      trainerTimerEl.textContent = formatTime(ms);
+    });
+    return;
+  }
+}
+
+function onTrainerInputKeydown(e) {
+  const state = timer.getState();
+  if (state !== TimerState.RUNNING && state !== TimerState.INPUT) return;
+
+  if (state === TimerState.RUNNING) {
+    timer.beginInput();
+  }
+
+  const isConfirm =
+    (confirmKey === "Enter" && e.code === "Enter") ||
+    (confirmKey === "Space" && e.code === "Space");
+
+  if (isConfirm) {
+    e.preventDefault();
+    timer.confirm();
+    finishRound();
+  }
+}
+
+function initTrainer() {
+  if (trainerActive) return;
+  trainerActive = true;
+
+  timer = createTimerStateMachine(handleTimerStateChange);
+  generateNextScramble();
+  renderStats();
+  renderResultsList();
+  handleTimerStateChange(TimerState.IDLE);
+
+  trainerKeydownHandler = onTrainerKeydown;
+  trainerKeyupHandler = onTrainerKeyup;
+  document.addEventListener("keydown", trainerKeydownHandler);
+  document.addEventListener("keyup", trainerKeyupHandler);
+  trainerInput.addEventListener("keydown", onTrainerInputKeydown);
+}
+
+function teardownTrainer() {
+  if (!trainerActive) return;
+  trainerActive = false;
+
+  if (timer) {
+    timer.destroy();
+    timer = null;
+  }
+  document.removeEventListener("keydown", trainerKeydownHandler);
+  document.removeEventListener("keyup", trainerKeyupHandler);
+  trainerInput.removeEventListener("keydown", onTrainerInputKeydown);
+}
+
+clearResultsBtn.addEventListener("click", () => {
+  if (!confirm("确定要清空全部成绩记录吗？")) return;
+  clearResults();
+  renderStats();
+  renderResultsList();
+});
+
+// Restore saved mode
+const savedMode = localStorage.getItem(MODE_KEY) || "learn";
+switchMode(savedMode);

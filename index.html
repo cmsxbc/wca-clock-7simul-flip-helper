@@ -225,11 +225,287 @@
         padding: 1px 4px;
         border-radius: 4px;
       }
+
+      /* Mode tab bar */
+      .tab-bar {
+        display: flex;
+        gap: 0;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #334155;
+      }
+
+      .tab-btn {
+        background: transparent;
+        color: #94a3b8;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 0;
+        transition: color 0.15s, border-color 0.15s;
+      }
+
+      .tab-btn:hover {
+        color: #e2e8f0;
+      }
+
+      .tab-btn.active {
+        color: #38bdf8;
+        border-bottom-color: #38bdf8;
+      }
+
+      .mode-container {
+        display: none;
+      }
+
+      .mode-container.visible {
+        display: block;
+      }
+
+      /* Memo trainer */
+      .trainer-scramble {
+        text-align: center;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 1.1rem;
+        color: #e2e8f0;
+        padding: 16px 12px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        word-break: break-word;
+      }
+
+      .trainer-timer {
+        text-align: center;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 4rem;
+        font-weight: 700;
+        margin: 16px 0;
+        transition: color 0.15s;
+        user-select: none;
+      }
+
+      .trainer-timer.color-idle { color: #e2e8f0; }
+      .trainer-timer.color-holding { color: #f87171; }
+      .trainer-timer.color-ready { color: #4ade80; }
+      .trainer-timer.color-running { color: #38bdf8; }
+      .trainer-timer.color-dnf { color: #f87171; }
+      .trainer-timer.color-valid { color: #4ade80; }
+
+      .trainer-hint {
+        text-align: center;
+        color: #94a3b8;
+        margin-bottom: 16px;
+        min-height: 1.5em;
+      }
+
+      .trainer-input-area {
+        display: none;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .trainer-input-area.visible {
+        display: block;
+      }
+
+      .trainer-input {
+        width: 240px;
+        max-width: 80%;
+        padding: 10px 14px;
+        border: 2px solid #475569;
+        border-radius: 8px;
+        background: #1e293b;
+        color: #f8fafc;
+        font-size: 1.5rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        text-align: center;
+        letter-spacing: 0.15em;
+      }
+
+      .trainer-input:focus {
+        outline: none;
+        border-color: #38bdf8;
+      }
+
+      .trainer-result {
+        text-align: center;
+        margin-bottom: 16px;
+        min-height: 1.5em;
+        font-weight: 600;
+      }
+
+      .trainer-config {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        color: #94a3b8;
+        font-size: 0.9rem;
+      }
+
+      .trainer-config-sep {
+        color: #475569;
+      }
+
+      .trainer-preview {
+        margin-bottom: 16px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .trainer-preview:empty {
+        display: none;
+      }
+
+      .trainer-config select {
+        padding: 4px 8px;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        background: #1e293b;
+        color: #f8fafc;
+        font-size: 0.9rem;
+      }
+
+      .trainer-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .stat-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+      }
+
+      .stat-label {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .stat-value {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #e2e8f0;
+      }
+
+      .trainer-results-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .trainer-results-header h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .trainer-results-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 6px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .result-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        font-size: 0.92rem;
+        cursor: pointer;
+      }
+
+      .result-item:hover {
+        border-color: #475569;
+      }
+
+      .result-index {
+        color: #64748b;
+        min-width: 2.5em;
+        text-align: right;
+      }
+
+      .result-time {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-weight: 600;
+        min-width: 6em;
+      }
+
+      .result-time.dnf {
+        color: #f87171;
+      }
+
+      .result-date {
+        color: #64748b;
+        margin-left: auto;
+        font-size: 0.82rem;
+      }
+
+      .result-detail {
+        display: none;
+        margin-top: 6px;
+        padding: 8px 10px;
+        background: #0b1222;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        word-break: break-word;
+      }
+
+      .result-detail.visible {
+        display: block;
+      }
+
+      .result-detail p {
+        margin: 2px 0;
+        color: #cbd5e1;
+      }
+
+      .btn-danger {
+        background: #7f1d1d;
+        color: #fca5a5;
+        font-size: 0.82rem;
+        padding: 5px 10px;
+      }
+
+      .btn-danger:hover {
+        background: #991b1b;
+      }
     </style>
   </head>
   <body>
     <main class="container">
       <h1>Clock 7simul Flip 学习助手</h1>
+
+      <nav class="tab-bar">
+        <button class="tab-btn active" data-mode="learn">学习模式</button>
+        <button class="tab-btn" data-mode="trainer">记忆练习</button>
+      </nav>
+
+      <div id="mode-learn" class="mode-container visible">
+
       <p>用于生成打乱、查看记忆编码与模拟执行步骤，辅助你练习和核对 7simul flip。</p>
 
       <section class="panel">
@@ -279,6 +555,51 @@
       <p class="meta">
         说明：本工具仅用于 7simul flip 学习与自检；正式比赛请以 WCA 官方打乱程序为准。
       </p>
+
+      </div><!-- /mode-learn -->
+
+      <div id="mode-trainer" class="mode-container">
+
+        <div id="trainer-scramble" class="trainer-scramble"></div>
+        <div id="trainer-preview" class="trainer-preview"></div>
+        <div id="trainer-timer" class="trainer-timer color-idle">0.000</div>
+        <div id="trainer-hint" class="trainer-hint">长按空格 2 秒准备计时</div>
+        <div id="trainer-result" class="trainer-result"></div>
+
+        <div id="trainer-input-area" class="trainer-input-area">
+          <input
+            id="trainer-input"
+            class="trainer-input"
+            type="text"
+            autocomplete="off"
+            placeholder="输入记忆码"
+          />
+        </div>
+
+        <div class="trainer-config">
+          <label class="inline" for="show-scramble-preview">
+            <input id="show-scramble-preview" type="checkbox" />
+            显示打乱后状态
+          </label>
+          <span class="trainer-config-sep">|</span>
+          <label for="confirm-key-select">确认键：</label>
+          <select id="confirm-key-select">
+            <option value="Enter">Enter</option>
+            <option value="Space">Space</option>
+          </select>
+        </div>
+
+        <div id="trainer-stats" class="trainer-stats"></div>
+
+        <div class="trainer-results-header">
+          <h3>成绩记录</h3>
+          <button id="clear-results" class="btn-danger" type="button">清空全部</button>
+        </div>
+
+        <ul id="trainer-results-list" class="trainer-results-list"></ul>
+
+      </div><!-- /mode-trainer -->
+
     </main>
 
     <script type="module" src="./app.js"></script>
