@@ -235,12 +235,76 @@ function getCountValue() {
   return Math.min(parsed, 200);
 }
 
+// ─── Learn mode history ───
+
+const HISTORY_KEY = "clock.learnHistory.scrambles";
+const historyList = document.querySelector("#history-list");
+const clearHistoryBtn = document.querySelector("#clear-history");
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function pushHistory(scrambles) {
+  const history = loadHistory();
+  const now = new Date().toISOString();
+  for (const scramble of scrambles) {
+    history.push({ scramble, date: now });
+  }
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function formatHistoryDate(iso) {
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  historyList.innerHTML = "";
+  for (let i = history.length - 1; i >= 0; i--) {
+    const entry = history[i];
+    const li = document.createElement("li");
+    li.className = "history-item";
+
+    const scrambleSpan = document.createElement("span");
+    scrambleSpan.className = "history-scramble";
+    scrambleSpan.textContent = entry.scramble;
+
+    const dateSpan = document.createElement("span");
+    dateSpan.className = "history-date";
+    dateSpan.textContent = formatHistoryDate(entry.date);
+
+    li.append(scrambleSpan, dateSpan);
+    li.addEventListener("click", () => {
+      renderScrambles([entry.scramble]);
+      statusText.textContent = "已从历史记录加载打乱。";
+    });
+    historyList.appendChild(li);
+  }
+}
+
+clearHistoryBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (!confirm("确定要清空全部历史记录吗？")) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+});
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   const count = getCountValue();
   countInput.value = String(count);
   const scrambles = generateClockScrambles(count);
+  pushHistory(scrambles);
   renderScrambles(scrambles);
+  renderHistory();
 });
 
 customForm.addEventListener("submit", (event) => {
@@ -253,6 +317,8 @@ customForm.addEventListener("submit", (event) => {
 
   try {
     renderScrambles([raw]);
+    pushHistory([raw]);
+    renderHistory();
     statusText.textContent = "已渲染你输入的打乱。";
   } catch (error) {
     statusText.textContent = `打乱格式有误：${error.message}`;
@@ -319,6 +385,7 @@ showGhostHandsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showGhostHa
 applyOptionDependencies();
 
 renderScrambles(generateClockScrambles(getCountValue()));
+renderHistory();
 
 // ─── Mode switching ───
 
@@ -345,6 +412,22 @@ function switchMode(mode) {
 for (const btn of tabButtons) {
   btn.addEventListener("click", () => switchMode(btn.dataset.mode));
 }
+
+// ─── Learn mode: ArrowRight shortcut ───
+
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "ArrowRight") return;
+  const activeTag = document.activeElement?.tagName;
+  if (activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT") return;
+  if (!modeLearn.classList.contains("visible")) return;
+
+  e.preventDefault();
+  countInput.value = "1";
+  const scrambles = generateClockScrambles(1);
+  pushHistory(scrambles);
+  renderScrambles(scrambles);
+  renderHistory();
+});
 
 // ─── Memo Trainer ───
 
