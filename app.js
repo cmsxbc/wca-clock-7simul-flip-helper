@@ -20,6 +20,18 @@ import {
   formatTime,
 } from "./memo-trainer.js";
 
+// ─── Back to top ───
+
+const backToTopBtn = document.querySelector("#back-to-top");
+
+window.addEventListener("scroll", () => {
+  backToTopBtn.classList.toggle("visible", window.scrollY > 400);
+}, { passive: true });
+
+backToTopBtn.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
 // ─── Settings panel ───
 
 const settingsOverlay = document.querySelector("#settings-overlay");
