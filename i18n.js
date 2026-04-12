@@ -29,6 +29,8 @@ const translations = {
     "settings.learn": "学习模式",
     "settings.learn.resetPins": "结束时将 pins 全部按下",
     "settings.learn.showStrictRestore": "显示 7simul flip 执行过程",
+    "settings.learn.hideMemo": "初始隐藏记忆编码",
+    "settings.learn.memoRevealKey": "显示记忆编码快捷键：",
     "settings.learn.showMemoDerivation": "显示记忆编码推导",
     "settings.learn.showStrictDetails": "显示每一步状态图",
     "settings.learn.showGhostHands": "显示橙色虚线（上一步指针）",
@@ -67,6 +69,7 @@ const translations = {
     "gen.memoPrefix": "记忆：",
 
     // Memo block
+    "memo.revealHint": "点击此处或按 {key} 显示记忆编码",
     "memo.title": "7simul flip 记忆：",
     "memo.table.step": "步骤",
     "memo.table.formula": "公式",
@@ -176,6 +179,8 @@ const translations = {
     "settings.learn": "Learn Mode",
     "settings.learn.resetPins": "Push all pins down at the end",
     "settings.learn.showStrictRestore": "Show 7simul flip execution steps",
+    "settings.learn.hideMemo": "Hide memo initially",
+    "settings.learn.memoRevealKey": "Memo reveal shortcut: ",
     "settings.learn.showMemoDerivation": "Show memo derivation",
     "settings.learn.showStrictDetails": "Show state diagram per step",
     "settings.learn.showGhostHands": "Show orange dashed hands (previous step)",
@@ -214,6 +219,7 @@ const translations = {
     "gen.memoPrefix": "Memo: ",
 
     // Memo block
+    "memo.revealHint": "Click or press {key} to reveal memo",
     "memo.title": "7simul flip memo: ",
     "memo.table.step": "Step",
     "memo.table.formula": "Formula",

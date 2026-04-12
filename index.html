@@ -272,6 +272,29 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       }
 
+      .memo-concealed {
+        cursor: pointer;
+      }
+
+      .memo-concealed .memo-summary,
+      .memo-concealed .memo-table-wrap {
+        filter: blur(8px);
+        user-select: none;
+        pointer-events: none;
+        transition: filter 0.2s;
+      }
+
+      .memo-reveal-hint {
+        margin: 6px 0 0;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        text-align: center;
+      }
+
+      .memo-block:not(.memo-concealed) .memo-reveal-hint {
+        display: none;
+      }
+
       .memo-details {
         margin-top: 6px;
       }
@@ -1164,6 +1187,17 @@
             <input id="show-strict-restore" type="checkbox" />
             <span data-i18n="settings.learn.showStrictRestore">显示 7simul flip 执行过程</span>
           </label>
+          <label class="settings-item" for="hide-memo-initially">
+            <input id="hide-memo-initially" type="checkbox" />
+            <span data-i18n="settings.learn.hideMemo">初始隐藏记忆编码</span>
+          </label>
+          <div class="settings-item">
+            <label for="memo-reveal-key-select" data-i18n="settings.learn.memoRevealKey">显示记忆编码快捷键：</label>
+            <select id="memo-reveal-key-select">
+              <option value="Space">Space</option>
+              <option value="Enter">Enter</option>
+            </select>
+          </div>
           <label class="settings-item" for="show-memo-derivation">
             <input id="show-memo-derivation" type="checkbox" />
             <span data-i18n="settings.learn.showMemoDerivation">显示记忆编码推导</span>

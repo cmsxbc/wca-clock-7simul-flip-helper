@@ -263,6 +263,8 @@ const customForm = document.querySelector("#custom-form");
 const customInput = document.querySelector("#custom-scramble");
 const resetPinsCheckbox = document.querySelector("#reset-pins");
 const showStrictRestoreCheckbox = document.querySelector("#show-strict-restore");
+const hideMemoCheckbox = document.querySelector("#hide-memo-initially");
+const memoRevealKeySelect = document.querySelector("#memo-reveal-key-select");
 const showMemoDerivationCheckbox = document.querySelector("#show-memo-derivation");
 const showGhostHandsCheckbox = document.querySelector("#show-ghost-hands");
 const showStrictDetailsCheckbox = document.querySelector("#show-strict-details");
@@ -272,6 +274,8 @@ const UI_PREF_KEYS = {
   showMemoDerivation: "clock.ui.showMemoDerivation",
   showStrictDetails: "clock.ui.showStrictDetails",
   showGhostHands: "clock.ui.showGhostHands",
+  hideMemo: "clock.ui.hideMemo",
+  memoRevealKey: "clock.ui.memoRevealKey",
 };
 
 function readCheckboxPreference(key, fallback) {
@@ -293,6 +297,7 @@ function applyOptionDependencies() {
   const strictEnabled = showStrictRestoreCheckbox.checked;
   showStrictDetailsCheckbox.disabled = !strictEnabled;
   showGhostHandsCheckbox.disabled = !strictEnabled || !showStrictDetailsCheckbox.checked;
+  memoRevealKeySelect.disabled = !hideMemoCheckbox.checked;
 }
 
 function formatWheelTurns(step) {
@@ -307,9 +312,20 @@ function formatTerm(term) {
   return `${prefix} = ${normalized}`;
 }
 
+function revealMemo(block) {
+  block.classList.remove("memo-concealed");
+}
+
+function revealAllMemos() {
+  for (const block of outputList.querySelectorAll(".memo-concealed")) {
+    revealMemo(block);
+  }
+}
+
 function renderMemoBlock(scramble) {
   const memo = calculateSevenSimulFlipMemo(scramble);
   const showMemoDerivation = showMemoDerivationCheckbox.checked;
+  const concealed = hideMemoCheckbox.checked;
   const wrapper = document.createElement("section");
   wrapper.className = "memo-block";
 
@@ -317,33 +333,41 @@ function renderMemoBlock(scramble) {
   summary.className = "memo-summary";
   summary.textContent = `${t("memo.title")}${memo.summary}`;
   wrapper.append(summary);
-  if (!showMemoDerivation) {
-    return wrapper;
+
+  if (showMemoDerivation) {
+    const tableWrap = document.createElement("div");
+    tableWrap.className = "memo-table-wrap";
+    const table = document.createElement("table");
+    table.className = "memo-table";
+
+    const thead = document.createElement("thead");
+    thead.innerHTML =
+      `<tr><th>${t("memo.table.step")}</th><th>${t("memo.table.formula")}</th><th>${t("memo.table.terms")}</th><th>${t("memo.table.total")}</th><th>${t("memo.table.code")}</th></tr>`;
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    for (const step of memo.steps) {
+      const row = document.createElement("tr");
+      const terms = step.terms.map(formatTerm).join(t("separator"));
+      const normalized = step.value >= 0 ? `+${step.value}` : `${step.value}`;
+      const rawPart = step.rawSum === step.value ? `${normalized}` : `${step.rawSum} -> ${normalized}`;
+      row.innerHTML = `<td>${step.id}</td><td>${step.description}</td><td>${terms}</td><td>${rawPart}</td><td>${step.encoded}</td>`;
+      tbody.appendChild(row);
+    }
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    wrapper.append(tableWrap);
   }
 
-  const tableWrap = document.createElement("div");
-  tableWrap.className = "memo-table-wrap";
-  const table = document.createElement("table");
-  table.className = "memo-table";
-
-  const thead = document.createElement("thead");
-  thead.innerHTML =
-    `<tr><th>${t("memo.table.step")}</th><th>${t("memo.table.formula")}</th><th>${t("memo.table.terms")}</th><th>${t("memo.table.total")}</th><th>${t("memo.table.code")}</th></tr>`;
-  table.appendChild(thead);
-
-  const tbody = document.createElement("tbody");
-  for (const step of memo.steps) {
-    const row = document.createElement("tr");
-    const terms = step.terms.map(formatTerm).join(t("separator"));
-    const normalized = step.value >= 0 ? `+${step.value}` : `${step.value}`;
-    const rawPart = step.rawSum === step.value ? `${normalized}` : `${step.rawSum} -> ${normalized}`;
-    row.innerHTML = `<td>${step.id}</td><td>${step.description}</td><td>${terms}</td><td>${rawPart}</td><td>${step.encoded}</td>`;
-    tbody.appendChild(row);
+  if (concealed) {
+    wrapper.classList.add("memo-concealed");
+    const hint = document.createElement("p");
+    hint.className = "memo-reveal-hint";
+    hint.textContent = t("memo.revealHint", { key: memoRevealKeySelect.value });
+    wrapper.append(hint);
+    wrapper.addEventListener("click", () => revealMemo(wrapper));
   }
-  table.appendChild(tbody);
-  tableWrap.appendChild(table);
 
-  wrapper.append(tableWrap);
   return wrapper;
 }
 
@@ -610,6 +634,23 @@ showStrictRestoreCheckbox.addEventListener("change", () => {
   }
 });
 
+hideMemoCheckbox.addEventListener("change", () => {
+  saveCheckboxPreference(UI_PREF_KEYS.hideMemo, hideMemoCheckbox.checked);
+  applyOptionDependencies();
+  const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  if (current.length > 0) {
+    renderScrambles(current);
+  }
+});
+
+memoRevealKeySelect.addEventListener("change", () => {
+  localStorage.setItem(UI_PREF_KEYS.memoRevealKey, memoRevealKeySelect.value);
+  const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
+  if (current.length > 0) {
+    renderScrambles(current);
+  }
+});
+
 showMemoDerivationCheckbox.addEventListener("change", () => {
   saveCheckboxPreference(UI_PREF_KEYS.showMemoDerivation, showMemoDerivationCheckbox.checked);
   const current = [...outputList.querySelectorAll(".scramble-item")].map((item) => item.dataset.scramble);
@@ -636,6 +677,8 @@ showStrictDetailsCheckbox.addEventListener("change", () => {
 });
 
 showStrictRestoreCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showStrictRestore, false);
+hideMemoCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.hideMemo, false);
+memoRevealKeySelect.value = localStorage.getItem(UI_PREF_KEYS.memoRevealKey) || "Space";
 showMemoDerivationCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showMemoDerivation, false);
 showStrictDetailsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showStrictDetails, true);
 showGhostHandsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showGhostHands, false);
@@ -672,16 +715,23 @@ for (const btn of tabButtons) {
   btn.addEventListener("click", () => switchMode(btn.dataset.mode));
 }
 
-// ─── Learn mode: ArrowRight shortcut ───
+// ─── Learn mode: keyboard shortcuts ───
 
 document.addEventListener("keydown", (e) => {
-  if (e.code !== "ArrowRight") return;
   const activeTag = document.activeElement?.tagName;
   if (activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT") return;
   if (!modeLearn.classList.contains("visible")) return;
 
-  e.preventDefault();
-  learnGenerate();
+  if (e.code === "ArrowRight") {
+    e.preventDefault();
+    learnGenerate();
+    return;
+  }
+
+  if (hideMemoCheckbox.checked && e.code === memoRevealKeySelect.value) {
+    e.preventDefault();
+    revealAllMemos();
+  }
 });
 
 // ─── Generator mode ───
