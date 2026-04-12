@@ -1,0 +1,14 @@
+{
+  "name": "Clock 7simul Flip 学习助手",
+  "short_name": "Clock 7simul",
+  "description": "WCA Clock 7-simultaneous flip method learning helper with scramble generator, memo trainer and step-by-step visualization.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc",
+  "icons": [
+    { "src": "icon-light.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-light-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-light-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

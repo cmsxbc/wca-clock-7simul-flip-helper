@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
     <title>Clock 7simul Flip 学习助手</title>
+    <link id="link-manifest" rel="manifest" href="./manifest.json" />
+    <link id="link-icon-svg" rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link id="link-icon-png" rel="icon" href="./icon-192.png" type="image/png" sizes="192x192" />
+    <link id="link-apple-touch" rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <script>
       (function () {
         var t = localStorage.getItem("clock.ui.theme") || "dark";
@@ -1068,6 +1073,17 @@
               <option value="light" data-i18n="settings.theme.light">日间（浅色）</option>
               <option value="system" data-i18n="settings.theme.system">跟随系统</option>
             </select>
+          </div>
+          <div class="settings-item">
+            <label for="icon-theme-select" data-i18n="settings.iconTheme.label">桌面图标：</label>
+            <select id="icon-theme-select">
+              <option value="dark" data-i18n="settings.iconTheme.dark">深色</option>
+              <option value="light" data-i18n="settings.iconTheme.light">浅色</option>
+            </select>
+          </div>
+          <div id="icon-preview" class="settings-item" style="gap:12px;">
+            <img id="icon-preview-dark" src="./icon-192.png" width="48" height="48" style="border-radius:10px;border:2px solid var(--border-primary);cursor:pointer;" />
+            <img id="icon-preview-light" src="./icon-light-192.png" width="48" height="48" style="border-radius:10px;border:2px solid var(--border-primary);cursor:pointer;" />
           </div>
         </div>
 

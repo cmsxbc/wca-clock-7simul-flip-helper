@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="dial" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Outer rim ring -->
+  <circle cx="256" cy="256" r="242" fill="url(#rim)"/>
+  <!-- Main clock face -->
+  <circle cx="256" cy="256" r="224" fill="url(#face)"/>
+
+  <!-- 12 o'clock tick marks on the large dial -->
+  <line x1="256" y1="40" x2="256" y2="60" stroke="#475569" stroke-width="5" stroke-linecap="round"/>
+  <line x1="256" y1="452" x2="256" y2="472" stroke="#475569" stroke-width="5" stroke-linecap="round"/>
+  <line x1="40" y1="256" x2="60" y2="256" stroke="#475569" stroke-width="5" stroke-linecap="round"/>
+  <line x1="452" y1="256" x2="472" y2="256" stroke="#475569" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- 9 small dials, 3x3 grid -->
+  <circle cx="168" cy="168" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+  <circle cx="256" cy="168" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+  <circle cx="344" cy="168" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+  <circle cx="168" cy="256" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+  <circle cx="256" cy="256" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+  <circle cx="344" cy="256" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+  <circle cx="168" cy="344" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+  <circle cx="256" cy="344" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+  <circle cx="344" cy="344" r="44" fill="url(#dial)" stroke="#475569" stroke-width="2.5"/>
+
+  <!-- Clock hands (accent colored, varying hours) -->
+  <line x1="168" y1="168" x2="168" y2="132" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="256" y1="168" x2="283" y2="145" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="344" y1="168" x2="362" y2="199" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="168" y1="256" x2="140" y2="228" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="256" y2="220" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="344" y1="256" x2="380" y2="256" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="168" y1="344" x2="150" y2="375" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="256" y1="344" x2="220" y2="344" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="344" y1="344" x2="369" y2="369" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round"/>
+
+  <!-- Center dots -->
+  <circle cx="168" cy="168" r="3.5" fill="#e2e8f0"/>
+  <circle cx="256" cy="168" r="3.5" fill="#e2e8f0"/>
+  <circle cx="344" cy="168" r="3.5" fill="#e2e8f0"/>
+  <circle cx="168" cy="256" r="3.5" fill="#e2e8f0"/>
+  <circle cx="256" cy="256" r="3.5" fill="#e2e8f0"/>
+  <circle cx="344" cy="256" r="3.5" fill="#e2e8f0"/>
+  <circle cx="168" cy="344" r="3.5" fill="#e2e8f0"/>
+  <circle cx="256" cy="344" r="3.5" fill="#e2e8f0"/>
+  <circle cx="344" cy="344" r="3.5" fill="#e2e8f0"/>
+
+  <!-- 4 Pins between dials -->
+  <circle cx="212" cy="212" r="9" fill="#0ea5e9" stroke="#0284c7" stroke-width="2"/>
+  <circle cx="212" cy="212" r="3.5" fill="#bae6fd"/>
+  <circle cx="300" cy="212" r="9" fill="#475569" stroke="#64748b" stroke-width="2"/>
+  <circle cx="300" cy="212" r="3.5" fill="#334155"/>
+  <circle cx="212" cy="300" r="9" fill="#475569" stroke="#64748b" stroke-width="2"/>
+  <circle cx="212" cy="300" r="3.5" fill="#334155"/>
+  <circle cx="300" cy="300" r="9" fill="#0ea5e9" stroke="#0284c7" stroke-width="2"/>
+  <circle cx="300" cy="300" r="3.5" fill="#bae6fd"/>
+</svg>

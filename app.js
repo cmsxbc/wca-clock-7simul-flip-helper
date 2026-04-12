@@ -96,6 +96,68 @@ systemDarkQuery.addEventListener("change", () => {
   }
 });
 
+// ─── Icon theme management ───
+
+const ICON_THEME_KEY = "clock.ui.iconTheme";
+const iconThemeSelect = document.querySelector("#icon-theme-select");
+const iconPreviewDark = document.querySelector("#icon-preview-dark");
+const iconPreviewLight = document.querySelector("#icon-preview-light");
+
+const ICON_ASSETS = {
+  dark: {
+    svg: "./icon.svg",
+    png192: "./icon-192.png",
+    appleTouch: "./apple-touch-icon.png",
+    manifest: "./manifest.json",
+    themeColor: "#0f172a",
+  },
+  light: {
+    svg: "./icon-light.svg",
+    png192: "./icon-light-192.png",
+    appleTouch: "./apple-touch-icon-light.png",
+    manifest: "./manifest-light.json",
+    themeColor: "#f8fafc",
+  },
+};
+
+function loadIconTheme() {
+  return localStorage.getItem(ICON_THEME_KEY) || "dark";
+}
+
+function applyIconTheme(variant) {
+  const assets = ICON_ASSETS[variant] || ICON_ASSETS.dark;
+  document.querySelector("#link-manifest").href = assets.manifest;
+  document.querySelector("#link-icon-svg").href = assets.svg;
+  document.querySelector("#link-icon-png").href = assets.png192;
+  document.querySelector("#link-apple-touch").href = assets.appleTouch;
+  document.querySelector('meta[name="theme-color"]').content = assets.themeColor;
+
+  const activeBorder = "2px solid var(--accent)";
+  const inactiveBorder = "2px solid var(--border-primary)";
+  iconPreviewDark.style.border = variant === "dark" ? activeBorder : inactiveBorder;
+  iconPreviewLight.style.border = variant === "light" ? activeBorder : inactiveBorder;
+}
+
+iconThemeSelect.value = loadIconTheme();
+applyIconTheme(loadIconTheme());
+
+iconThemeSelect.addEventListener("change", () => {
+  localStorage.setItem(ICON_THEME_KEY, iconThemeSelect.value);
+  applyIconTheme(iconThemeSelect.value);
+});
+
+iconPreviewDark.addEventListener("click", () => {
+  iconThemeSelect.value = "dark";
+  localStorage.setItem(ICON_THEME_KEY, "dark");
+  applyIconTheme("dark");
+});
+
+iconPreviewLight.addEventListener("click", () => {
+  iconThemeSelect.value = "light";
+  localStorage.setItem(ICON_THEME_KEY, "light");
+  applyIconTheme("light");
+});
+
 // ─── Language management ───
 
 loadLanguage();
