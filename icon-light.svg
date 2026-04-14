@@ -1,70 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#f1f5f9"/>
-    </linearGradient>
-    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0ea5e9"/>
-      <stop offset="100%" stop-color="#0369a1"/>
-    </linearGradient>
-    <linearGradient id="dial" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#e2e8f0"/>
-    </linearGradient>
-  </defs>
+  <circle cx="256" cy="256" r="186" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="8"/>
 
-  <!-- Outer rim ring -->
-  <circle cx="256" cy="256" r="242" fill="url(#rim)"/>
-  <!-- Main clock face -->
-  <circle cx="256" cy="256" r="224" fill="url(#face)"/>
+  <circle cx="144" cy="144" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+  <circle cx="256" cy="144" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+  <circle cx="368" cy="144" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+  <circle cx="144" cy="256" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+  <circle cx="256" cy="256" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+  <circle cx="368" cy="256" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+  <circle cx="144" cy="368" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+  <circle cx="256" cy="368" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
+  <circle cx="368" cy="368" r="58" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
 
-  <!-- 12 o'clock tick marks on the large dial -->
-  <line x1="256" y1="40" x2="256" y2="60" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>
-  <line x1="256" y1="452" x2="256" y2="472" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>
-  <line x1="40" y1="256" x2="60" y2="256" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>
-  <line x1="452" y1="256" x2="472" y2="256" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>
+  <line x1="144" y1="144" x2="144" y2="104" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
+  <line x1="256" y1="144" x2="286" y2="114" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
+  <line x1="368" y1="144" x2="388" y2="179" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
+  <line x1="144" y1="256" x2="114" y2="226" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="256" y2="216" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
+  <line x1="368" y1="256" x2="408" y2="256" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
+  <line x1="144" y1="368" x2="124" y2="403" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
+  <line x1="256" y1="368" x2="216" y2="368" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
+  <line x1="368" y1="368" x2="398" y2="398" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/>
 
-  <!-- 9 small dials, 3x3 grid -->
-  <circle cx="168" cy="168" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
-  <circle cx="256" cy="168" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
-  <circle cx="344" cy="168" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
-  <circle cx="168" cy="256" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
-  <circle cx="256" cy="256" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
-  <circle cx="344" cy="256" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
-  <circle cx="168" cy="344" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
-  <circle cx="256" cy="344" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
-  <circle cx="344" cy="344" r="44" fill="url(#dial)" stroke="#94a3b8" stroke-width="2.5"/>
+  <circle cx="144" cy="144" r="4.6" fill="#f8fafc"/>
+  <circle cx="256" cy="144" r="4.6" fill="#f8fafc"/>
+  <circle cx="368" cy="144" r="4.6" fill="#f8fafc"/>
+  <circle cx="144" cy="256" r="4.6" fill="#f8fafc"/>
+  <circle cx="256" cy="256" r="4.6" fill="#f8fafc"/>
+  <circle cx="368" cy="256" r="4.6" fill="#f8fafc"/>
+  <circle cx="144" cy="368" r="4.6" fill="#f8fafc"/>
+  <circle cx="256" cy="368" r="4.6" fill="#f8fafc"/>
+  <circle cx="368" cy="368" r="4.6" fill="#f8fafc"/>
 
-  <!-- Clock hands -->
-  <line x1="168" y1="168" x2="168" y2="132" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="256" y1="168" x2="283" y2="145" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="344" y1="168" x2="362" y2="199" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="168" y1="256" x2="140" y2="228" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="256" y1="256" x2="256" y2="220" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="344" y1="256" x2="380" y2="256" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="168" y1="344" x2="150" y2="375" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="256" y1="344" x2="220" y2="344" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="344" y1="344" x2="369" y2="369" stroke="#0284c7" stroke-width="4.5" stroke-linecap="round"/>
-
-  <!-- Center dots -->
-  <circle cx="168" cy="168" r="3.5" fill="#334155"/>
-  <circle cx="256" cy="168" r="3.5" fill="#334155"/>
-  <circle cx="344" cy="168" r="3.5" fill="#334155"/>
-  <circle cx="168" cy="256" r="3.5" fill="#334155"/>
-  <circle cx="256" cy="256" r="3.5" fill="#334155"/>
-  <circle cx="344" cy="256" r="3.5" fill="#334155"/>
-  <circle cx="168" cy="344" r="3.5" fill="#334155"/>
-  <circle cx="256" cy="344" r="3.5" fill="#334155"/>
-  <circle cx="344" cy="344" r="3.5" fill="#334155"/>
-
-  <!-- 4 Pins between dials -->
-  <circle cx="212" cy="212" r="9" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
-  <circle cx="212" cy="212" r="3.5" fill="#bae6fd"/>
-  <circle cx="300" cy="212" r="9" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2"/>
-  <circle cx="300" cy="212" r="3.5" fill="#e2e8f0"/>
-  <circle cx="212" cy="300" r="9" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2"/>
-  <circle cx="212" cy="300" r="3.5" fill="#e2e8f0"/>
-  <circle cx="300" cy="300" r="9" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
-  <circle cx="300" cy="300" r="3.5" fill="#bae6fd"/>
+  <circle cx="200" cy="200" r="12.2" fill="#2563eb" stroke="#1d4ed8" stroke-width="2"/>
+  <circle cx="312" cy="200" r="12.2" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2"/>
+  <circle cx="200" cy="312" r="12.2" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2"/>
+  <circle cx="312" cy="312" r="12.2" fill="#2563eb" stroke="#1d4ed8" stroke-width="2"/>
 </svg>
