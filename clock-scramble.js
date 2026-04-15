@@ -246,13 +246,13 @@ function encodeMemoValue(value) {
   return String.fromCharCode("A".charCodeAt(0) + Math.abs(value) - 1);
 }
 
-function getFaceDialMap(state) {
-  // 7simul flip memo reads "front" as the side that is up during scramble.
+function getFaceDialMap(state, { executeOnBack = true } = {}) {
   const p = state.posit;
-  const front = p.slice(9, 18);
-  const backRaw = p.slice(0, 9);
-  // Back is read after x2 flip while facing it, which corresponds to 180deg rotation.
-  const back = [8, 7, 6, 5, 4, 3, 2, 1, 0].map((index) => backRaw[index]);
+  // Uppercase = the face where execution begins; lowercase = the face after x2.
+  const front = executeOnBack ? p.slice(9, 18) : p.slice(0, 9);
+  const backRaw = executeOnBack ? p.slice(0, 9) : p.slice(9, 18);
+  // The second face is read after x2 flip, which corresponds to 180° rotation.
+  const back = ROTATE_180_FACE_INDEXES.map((index) => backRaw[index]);
   return {
     UL: front[0],
     U: front[1],
@@ -287,9 +287,9 @@ function edgeDelta(map, from, to) {
   };
 }
 
-export function calculateSevenSimulFlipMemo(scramble) {
+export function calculateSevenSimulFlipMemo(scramble, { executeOnBack = true } = {}) {
   const state = applyClockScramble(scramble);
-  const dials = getFaceDialMap(state);
+  const dials = getFaceDialMap(state, { executeOnBack });
   const steps = [
     {
       id: 1,
@@ -423,18 +423,20 @@ function executeWheel(state, pinsFront, wheel, amount) {
   );
 }
 
-function stateInMemoExecutionFrame(scrambleState) {
-  // 7simul flip memo reads the side-up-during-scramble as front.
+function stateInMemoExecutionFrame(scrambleState, { executeOnBack = true } = {}) {
+  // Place the first-to-solve face at posit[0..8].
+  const posit = executeOnBack
+    ? [...scrambleState.posit.slice(9, 18), ...scrambleState.posit.slice(0, 9)]
+    : [...scrambleState.posit];
   return {
-    posit: [...scrambleState.posit.slice(9, 18), ...scrambleState.posit.slice(0, 9)],
-    // Execution starts from the opposite viewing side (execute-on-black).
+    posit,
     rightSideUp: false,
     pinsFront: [...ALL_PINS_DOWN],
   };
 }
 
-export function executeSevenSimulFlipRestore(scramble) {
-  return executeSevenSimulFlipRestoreWithTrace(scramble).state;
+export function executeSevenSimulFlipRestore(scramble, { executeOnBack = true } = {}) {
+  return executeSevenSimulFlipRestoreWithTrace(scramble, { executeOnBack }).state;
 }
 
 function cloneState(state) {
@@ -445,9 +447,9 @@ function cloneState(state) {
   };
 }
 
-export function executeSevenSimulFlipRestoreWithTrace(scramble) {
-  const memoValues = calculateSevenSimulFlipMemo(scramble).steps.map((step) => step.value);
-  let state = stateInMemoExecutionFrame(applyClockScramble(scramble));
+export function executeSevenSimulFlipRestoreWithTrace(scramble, { executeOnBack = true } = {}) {
+  const memoValues = calculateSevenSimulFlipMemo(scramble, { executeOnBack }).steps.map((step) => step.value);
+  let state = stateInMemoExecutionFrame(applyClockScramble(scramble), { executeOnBack });
   const initialState = cloneState(state);
   const trace = [];
 
@@ -762,6 +764,7 @@ export function renderClockStateSvg(state, options = {}) {
     twelveDown = false,
     handOffsetTurns = 0,
     colors = DEFAULT_CLOCK_COLORS,
+    x2Flip = false,
   } = options;
   const renderOptions = {
     ghostPosit: ghostState?.posit ?? null,
@@ -772,6 +775,7 @@ export function renderClockStateSvg(state, options = {}) {
     colors,
   };
   const left = renderFace(state.posit, 0, 108, "left", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
-  const right = renderFace(state.posit, 9, 324, "right", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
+  const rightContent = renderFace(state.posit, 9, 324, "right", state.rightSideUp, state.pinsFront ?? ALL_PINS_DOWN, renderOptions);
+  const right = x2Flip ? `<g transform="rotate(180, 324, 112)">${rightContent}</g>` : rightContent;
   return `<svg viewBox="0 0 432 224" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Clock scramble state">${left}${right}</svg>`;
 }

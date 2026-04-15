@@ -202,3 +202,40 @@ test("strict 7simul flip trace contains eight step snapshots", () => {
   assert.deepEqual(traced.trace.map((step) => step.step), [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.deepEqual(traced.state.posit, new Array(18).fill(0));
 });
+
+test("execute-on-front memo differs from execute-on-back for same scramble", () => {
+  const scramble = "UR3- DR4- DL1- UL2- U1+ R4+ D2- L3- ALL1+ y2 U3- R1- D4- L4+ ALL1+ DR DL UL";
+  const memoBack = calculateSevenSimulFlipMemo(scramble, { executeOnBack: true });
+  const memoFront = calculateSevenSimulFlipMemo(scramble, { executeOnBack: false });
+
+  // Both produce 6 steps, but values differ because they read different faces
+  assert.equal(memoBack.steps.length, 6);
+  assert.equal(memoFront.steps.length, 6);
+  assert.notDeepEqual(
+    memoBack.steps.map((s) => s.value),
+    memoFront.steps.map((s) => s.value),
+  );
+});
+
+test("execute-on-front restores published example to solved", () => {
+  const scramble = "UR3- DR4- DL1- UL2- U1+ R4+ D2- L3- ALL1+ y2 U3- R1- D4- L4+ ALL1+ DR DL UL";
+  const restored = executeSevenSimulFlipRestore(scramble, { executeOnBack: false });
+  assert.deepEqual(restored.posit, new Array(18).fill(0));
+});
+
+test("execute-on-front forms closed loop on random scrambles", () => {
+  for (let i = 0; i < 20; i += 1) {
+    const scramble = generateClockScramble();
+    const restored = executeSevenSimulFlipRestore(scramble, { executeOnBack: false });
+    assert.deepEqual(restored.posit, new Array(18).fill(0), scramble);
+  }
+});
+
+test("execute-on-front trace contains eight step snapshots", () => {
+  const scramble = "UR3- DR4- DL1- UL2- U1+ R4+ D2- L3- ALL1+ y2 U3- R1- D4- L4+ ALL1+ DR DL UL";
+  const traced = executeSevenSimulFlipRestoreWithTrace(scramble, { executeOnBack: false });
+
+  assert.equal(traced.trace.length, 8);
+  assert.deepEqual(traced.trace.map((step) => step.step), [1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.deepEqual(traced.state.posit, new Array(18).fill(0));
+});

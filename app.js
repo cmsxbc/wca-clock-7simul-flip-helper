@@ -268,6 +268,8 @@ const memoRevealKeySelect = document.querySelector("#memo-reveal-key-select");
 const showMemoDerivationCheckbox = document.querySelector("#show-memo-derivation");
 const showGhostHandsCheckbox = document.querySelector("#show-ghost-hands");
 const showStrictDetailsCheckbox = document.querySelector("#show-strict-details");
+const useX2FlipCheckbox = document.querySelector("#use-x2-flip");
+const executeOnBackCheckbox = document.querySelector("#execute-on-back");
 
 const UI_PREF_KEYS = {
   showStrictRestore: "clock.ui.showStrictRestore",
@@ -276,6 +278,8 @@ const UI_PREF_KEYS = {
   showGhostHands: "clock.ui.showGhostHands",
   hideMemo: "clock.ui.hideMemo",
   memoRevealKey: "clock.ui.memoRevealKey",
+  useX2Flip: "clock.ui.useX2Flip",
+  executeOnBack: "clock.ui.executeOnBack",
 };
 
 function readCheckboxPreference(key, fallback) {
@@ -323,7 +327,8 @@ function revealAllMemos() {
 }
 
 function renderMemoBlock(scramble) {
-  const memo = calculateSevenSimulFlipMemo(scramble);
+  const executeOnBack = executeOnBackCheckbox.checked;
+  const memo = calculateSevenSimulFlipMemo(scramble, { executeOnBack });
   const showMemoDerivation = showMemoDerivationCheckbox.checked;
   const concealed = hideMemoCheckbox.checked;
   const wrapper = document.createElement("section");
@@ -379,7 +384,8 @@ function renderStrictRestoreBlock(scramble) {
   title.className = "strict-restore-title";
 
   try {
-    const restored = executeSevenSimulFlipRestoreWithTrace(scramble);
+    const executeOnBack = executeOnBackCheckbox.checked;
+    const restored = executeSevenSimulFlipRestoreWithTrace(scramble, { executeOnBack });
     const finalState = restored.state;
     const solved = finalState.posit.every((value) => value === 0);
     const showStrictDetails = showStrictDetailsCheckbox.checked;
@@ -455,10 +461,10 @@ function renderStrictRestoreBlock(scramble) {
         previousState && previousState.rightSideUp === step.state.rightSideUp
           ? step.state.posit.map((value, index) => value !== previousState.posit[index])
           : new Array(18).fill(false);
-      // execute-on-back color mapping:
-      // before x2 => left light / right dark
-      // after x2  => left dark / right light
-      const displayRightSideUp = !step.state.rightSideUp;
+      // execute-on-back: invert rightSideUp so right panel shows the dark side first
+      // execute-on-front: keep rightSideUp so right panel shows the light side first
+      const executeOnBack = executeOnBackCheckbox.checked;
+      const displayRightSideUp = executeOnBack ? !step.state.rightSideUp : step.state.rightSideUp;
       const stepPreview = document.createElement("div");
       stepPreview.className = "scramble-preview";
       stepPreview.innerHTML = renderClockStateSvg(step.state, {
@@ -468,6 +474,7 @@ function renderStrictRestoreBlock(scramble) {
         twelveDown: step.step >= 4,
         handOffsetTurns: step.step >= 4 ? 6 : 0,
         colors: getClockColors(),
+        x2Flip: useX2FlipCheckbox.checked,
       });
       stepBlock.append(stepText, stepOps, stepPreview);
       wrapper.append(stepBlock);
@@ -497,7 +504,7 @@ function renderScrambles(scrambles) {
 
     const preview = document.createElement("div");
     preview.className = "scramble-preview";
-    preview.innerHTML = renderClockStateSvg(applyClockScramble(scramble, { resetPinsDownAtEnd }), { colors: getClockColors() });
+    preview.innerHTML = renderClockStateSvg(applyClockScramble(scramble, { resetPinsDownAtEnd }), { colors: getClockColors(), x2Flip: useX2FlipCheckbox.checked });
 
     const memoBlock = renderMemoBlock(scramble);
     const strictRestoreBlock = showStrictRestore ? renderStrictRestoreBlock(scramble) : null;
@@ -676,12 +683,24 @@ showStrictDetailsCheckbox.addEventListener("change", () => {
   }
 });
 
+useX2FlipCheckbox.addEventListener("change", () => {
+  saveCheckboxPreference(UI_PREF_KEYS.useX2Flip, useX2FlipCheckbox.checked);
+  refreshAllPreviews();
+});
+
+executeOnBackCheckbox.addEventListener("change", () => {
+  saveCheckboxPreference(UI_PREF_KEYS.executeOnBack, executeOnBackCheckbox.checked);
+  refreshAllPreviews();
+});
+
 showStrictRestoreCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showStrictRestore, false);
 hideMemoCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.hideMemo, false);
 memoRevealKeySelect.value = localStorage.getItem(UI_PREF_KEYS.memoRevealKey) || "Space";
 showMemoDerivationCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showMemoDerivation, false);
 showStrictDetailsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showStrictDetails, true);
 showGhostHandsCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.showGhostHands, false);
+useX2FlipCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.useX2Flip, false);
+executeOnBackCheckbox.checked = readCheckboxPreference(UI_PREF_KEYS.executeOnBack, true);
 applyOptionDependencies();
 
 renderScrambles(generateClockScrambles(1));
@@ -773,7 +792,7 @@ function renderGenScrambles(scrambles) {
     text.className = "scramble-text";
     text.textContent = `${index + 1}. ${scramble}`;
 
-    const memo = calculateSevenSimulFlipMemo(scramble);
+    const memo = calculateSevenSimulFlipMemo(scramble, { executeOnBack: executeOnBackCheckbox.checked });
     const memoEl = document.createElement("p");
     memoEl.className = "memo-summary";
     memoEl.style.marginTop = "4px";
@@ -847,7 +866,7 @@ showScramblePreviewCheckbox.addEventListener("change", () => {
 function updateScramblePreview() {
   if (showScramblePreviewCheckbox.checked && currentScramble) {
     const state = applyClockScramble(currentScramble, { resetPinsDownAtEnd: true });
-    trainerPreviewEl.innerHTML = renderClockStateSvg(state, { colors: getClockColors() });
+    trainerPreviewEl.innerHTML = renderClockStateSvg(state, { colors: getClockColors(), x2Flip: useX2FlipCheckbox.checked });
   } else {
     trainerPreviewEl.innerHTML = "";
   }
@@ -855,7 +874,8 @@ function updateScramblePreview() {
 
 function generateNextScramble() {
   currentScramble = generateClockScramble();
-  const memo = calculateSevenSimulFlipMemo(currentScramble);
+  const executeOnBack = executeOnBackCheckbox.checked;
+  const memo = calculateSevenSimulFlipMemo(currentScramble, { executeOnBack });
   currentExpected = memo.summary;
   trainerScrambleEl.textContent = currentScramble;
   updateScramblePreview();
