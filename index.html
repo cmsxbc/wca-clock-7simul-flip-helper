@@ -191,6 +191,42 @@
         border-radius: 8px;
         border: 1px solid var(--border-primary);
         padding: 4px;
+        cursor: zoom-in;
+      }
+
+      .diagram-lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: var(--overlay-bg);
+        z-index: 200;
+        cursor: zoom-out;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+
+      .diagram-lightbox.open {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .diagram-lightbox-content {
+        width: min(calc(100vw - 48px), 928px);
+        max-height: 90vh;
+        background: var(--bg-deep);
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
+        padding: 4px;
+        box-sizing: border-box;
+        box-shadow: 0 8px 32px var(--shadow);
+        cursor: default;
+      }
+
+      .diagram-lightbox-content svg {
+        display: block;
+        width: 100%;
+        height: auto;
       }
 
       .memo-block {
@@ -651,6 +687,7 @@
         margin-bottom: 16px;
         border-radius: 10px;
         overflow: hidden;
+        cursor: zoom-in;
       }
 
       .trainer-preview:empty {
@@ -1113,6 +1150,9 @@
     </style>
   </head>
   <body>
+    <div id="diagram-lightbox" class="diagram-lightbox">
+      <div class="diagram-lightbox-content" id="diagram-lightbox-content"></div>
+    </div>
     <div id="settings-overlay" class="settings-overlay">
       <aside class="settings-panel">
         <div class="settings-header">

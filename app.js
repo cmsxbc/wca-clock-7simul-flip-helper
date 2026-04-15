@@ -61,6 +61,38 @@ settingsOverlay.addEventListener("click", (e) => {
   }
 });
 
+// ─── Diagram lightbox ───
+
+const diagramLightbox = document.querySelector("#diagram-lightbox");
+const diagramLightboxContent = document.querySelector("#diagram-lightbox-content");
+
+function openDiagramLightbox(svgHTML) {
+  diagramLightboxContent.innerHTML = svgHTML;
+  diagramLightbox.classList.add("open");
+}
+
+function closeDiagramLightbox() {
+  diagramLightbox.classList.remove("open");
+  diagramLightboxContent.innerHTML = "";
+}
+
+diagramLightbox.addEventListener("click", (e) => {
+  if (e.target === diagramLightbox) closeDiagramLightbox();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && diagramLightbox.classList.contains("open")) {
+    closeDiagramLightbox();
+  }
+});
+
+document.body.addEventListener("click", (e) => {
+  const preview = e.target.closest(".scramble-preview, .trainer-preview");
+  if (!preview) return;
+  const svg = preview.querySelector("svg");
+  if (svg) openDiagramLightbox(svg.outerHTML);
+});
+
 // ─── Theme management ───
 
 const THEME_KEY = "clock.ui.theme";
